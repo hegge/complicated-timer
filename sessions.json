@@ -1,0 +1,18 @@
+[{
+	"name": "4x4 :3'",
+	"description": "",
+	"session": [{
+		"type": "repeat",
+		"repetitions": 4,
+		"group": [{
+			"type": "countdown",
+			"category": "work",
+			"duration": 240
+		},
+		{
+			"type": "countdown",
+			"category": "pause",
+			"duration": 180
+		}]
+	}]
+}]
