@@ -21,17 +21,43 @@ import {
   StatusBar,
 } from 'react-native';
 
+import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+
+import UUIDGenerator from 'react-native-uuid-generator';
+
 import Colors from './Colors.js';
 import Header from './Header.js';
 
-const SessionListItem = ({ name, description, duration, workDuration }) => (
+const Stack = createStackNavigator();
+
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Sessions"
+          component={SessionList}
+          options={{ title: 'Complicated Timer' }}
+        />
+        <Stack.Screen name="Play" component={Play} />
+        <Stack.Screen name="Edit" component={EditSession} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default App;
+
+const SessionListItem = ({ name, description, duration, workDuration, navigation }) => (
   <View style={styles.sessionContainer}>
     <Pressable
       style={{
         flexDirection: "row",
       }}
       onPress={() => {
-        alert('You tapped the button!');
+        navigation.navigate('Play', { name: { name } })
       }}>
       <View
         style={{
@@ -55,7 +81,7 @@ const SessionListItem = ({ name, description, duration, workDuration }) => (
   </View>
 );
 
-const SessionList: () => React$Node = () => {
+const SessionList = ({ navigation }) => {
   const [isLoading, setLoading] = useState(true);
   const [data, setData] = useState([]);
 
@@ -69,8 +95,20 @@ const SessionList: () => React$Node = () => {
 
   const renderSessionListItem = ({ item }) => (
     <SessionListItem name={item.name} description={item.description}
-      duration="14:00" workDuration="10:00" />
+      duration="14:00" workDuration="10:00"
+      navigation={navigation} />
   );
+
+  const emptySession = ({ uuid }) => {
+    return (
+      {
+        "id": uuid,
+        "name": "",
+        "description": "",
+        "session": []
+      }
+    );
+  }
 
   return (
     <>
@@ -88,6 +126,14 @@ const SessionList: () => React$Node = () => {
                 renderItem={renderSessionListItem}
               />
             )}
+            <Button
+              onPress={() => {
+                UUIDGenerator.getRandomUUID().then((uuid) => {
+                  setData([...data, emptySession({ uuid })]);
+                });
+              }}
+              title="Create new session"
+            />
           </View>
         </View>
       </ScrollView>
@@ -95,7 +141,7 @@ const SessionList: () => React$Node = () => {
   );
 };
 
-const Play: () => React$Node = () => {
+const Play = ({ navigation, name }) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -124,7 +170,7 @@ const Play: () => React$Node = () => {
 
       <Button
         onPress={() => {
-          alert('You tapped the button!');
+          navigation.navigate('Edit', { name: { name } })
         }}
         title="Edit"
       />
@@ -133,18 +179,18 @@ const Play: () => React$Node = () => {
 };
 
 const UselessTextInput = ({ placeholder }) => {
-  const [value, onChangeText] = React.useState("");
+  const [value, setText] = React.useState('');
 
   return (
     <TextInput
-      onChangeText={text => onChangeText(text)}
+      onChangeText={text => setText(text)}
       value={value}
-      defaultValue={placeholder}
+      placeholder={placeholder}
     />
   );
 }
 
-const EditSession: () => React$Node = () => {
+const EditSession = ({ name }) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -250,5 +296,3 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-
-export default SessionList;
