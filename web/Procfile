@@ -1,0 +1,1 @@
+web: java -Dclojure.main.report=stderr -cp target/uberjar/complicated-timer.jar clojure.main -m complicated-timer.core
