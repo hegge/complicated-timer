@@ -37,12 +37,18 @@ const App = () => {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen
-          name="Sessions"
+          name="SessionList"
           component={SessionList}
           options={{ title: 'Complicated Timer' }}
         />
-        <Stack.Screen name="Play" component={Play} />
-        <Stack.Screen name="Edit" component={EditSession} />
+        <Stack.Screen
+          name="Play"
+          component={Play}
+          options={({ route }) => ({ title: route.params.name })} />
+        <Stack.Screen
+          name="EditSession"
+          component={EditSession}
+          options={{ title: 'Edit session' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -50,20 +56,19 @@ const App = () => {
 
 export default App;
 
-const SessionListItem = ({ name, description, duration, workDuration, navigation }) => (
+const SessionListItem = ({ name, description, duration, workDuration, item, navigation }) => (
   <View style={styles.sessionContainer}>
     <Pressable
       style={{
         flexDirection: "row",
       }}
       onPress={() => {
-        navigation.navigate('Play', { name: { name } })
+        navigation.navigate('Play', { item: item, name: name })
       }}>
       <View
         style={{
           flexDirection: "column",
           flex: 1,
-
         }}>
         <Text style={styles.sessionName}>{name}</Text>
         <Text style={styles.sessionDescription}>{description}</Text>
@@ -96,7 +101,7 @@ const SessionList = ({ navigation }) => {
   const renderSessionListItem = ({ item }) => (
     <SessionListItem name={item.name} description={item.description}
       duration="14:00" workDuration="10:00"
-      navigation={navigation} />
+      item={item} navigation={navigation} />
   );
 
   const emptySession = ({ uuid }) => {
@@ -127,6 +132,7 @@ const SessionList = ({ navigation }) => {
               />
             )}
             <Button
+              color={Colors.darkblue}
               onPress={() => {
                 UUIDGenerator.getRandomUUID().then((uuid) => {
                   setData([...data, emptySession({ uuid })]);
@@ -141,19 +147,37 @@ const SessionList = ({ navigation }) => {
   );
 };
 
-const Play = ({ navigation, name }) => {
+const Play = ({ route, navigation }) => {
+  const { item } = route.params;
+
+  const [timerValue, setTimerValue] = useState(20);
+  const [isRunning, setIsRunning] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const progress = "1/2 1/3";
+
+  const currentStepName = "Prepare"
+  const currentStepDuration = 20;
+  const currentStepCategory = "prepare";
+
+  const nextStepName = "Work";
+  const nextStepDuration = 7;
+  const nextStepCategory = "work";
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.prepare}>
         <View style={styles.currentStep}>
-          <Text style={styles.stepProgress}>1/2 1/3</Text>
-          <Text style={styles.stepName}>Prepare</Text>
-          <Text style={styles.timer}>20</Text>
+          <Text style={styles.stepProgress}>{progress}</Text>
+          <Text style={styles.stepName}>{currentStepName}</Text>
+          <Text style={styles.timer}>{timerValue}</Text>
           <Button
+            color={Colors.darkblue}
             onPress={() => {
+              setIsRunning(!isRunning);
             }}
-            title="Start"
+            title={isRunning ? "Pause" : "Start"}
           />
           <View style={styles.stepProgressBar} />
           <View style={styles.sessionProgressBar} />
@@ -162,15 +186,16 @@ const Play = ({ navigation, name }) => {
 
       <View style={styles.work}>
         <View style={styles.nextStep}>
-          <Text>Next</Text>
-          <Text style={styles.nextName}>Work</Text>
-          <Text style={styles.nextDuration}>00:07</Text>
+          <Text style={styles.nextTitle}>Next</Text>
+          <Text style={styles.nextName}>{nextStepName}</Text>
+          <Text style={styles.nextDuration}>00:0{nextStepDuration}</Text>
         </View>
       </View>
 
       <Button
+        color={Colors.darkblue}
         onPress={() => {
-          navigation.navigate('Edit', { name: { name } })
+          navigation.navigate('EditSession', { item: item })
         }}
         title="Edit"
       />
@@ -178,8 +203,8 @@ const Play = ({ navigation, name }) => {
   );
 };
 
-const UselessTextInput = ({ placeholder }) => {
-  const [value, setText] = React.useState('');
+const UselessTextInput = ({ text, placeholder }) => {
+  const [value, setText] = React.useState(text);
 
   return (
     <TextInput
@@ -190,24 +215,50 @@ const UselessTextInput = ({ placeholder }) => {
   );
 }
 
-const EditSession = ({ name }) => {
+const emptyStep = () => {
+  return (
+    {
+      "type": "countdown",
+      "category": "work",
+      "duration": 60
+    }
+  );
+}
+
+const emptyRepeat = () => {
+  return (
+    {
+      "type": "repeat",
+      "repetitions": 4,
+      "group": []
+    }
+  );
+}
+
+const EditSession = ({ route, navigation }) => {
+  const { item } = route.params;
+
+  const [session, setSession] = React.useState(item.session);
+  console.log(item.session);
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
         <View style={styles.sectionContainer}>
-          <UselessTextInput style={styles.textInput} placeholder="Enter name"></UselessTextInput>
-          <UselessTextInput style={styles.textInput} placeholder="Enter description"></UselessTextInput>
+          <UselessTextInput style={styles.textInput} text={item.name} placeholder="Enter name" />
+          <UselessTextInput style={styles.textInput} text={item.description} placeholder="Enter description" />
         </View>
         <Button
+          color={Colors.darkblue}
           onPress={() => {
-            alert('You tapped the button!');
+            setSession([...session, emptyStep()]);
           }}
           title="Add step"
         />
         <Button
+          color={Colors.darkblue}
           onPress={() => {
-            alert('You tapped the button!');
+            setSession([...session, emptyRepeat()]);
           }}
           title="Add repeat"
         />
@@ -249,34 +300,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   stepName: {
-    fontSize: 18,
+    fontSize: 24,
+    paddingVertical: 8,
     color: Colors.lighter,
   },
   stepProgress: {
-    fontSize: 18,
+    fontSize: 32,
+    paddingVertical: 8,
     color: Colors.lighter,
   },
   timer: {
-    fontSize: 56,
+    fontSize: 128,
     color: Colors.lighter,
   },
   currentStep: {
     fontSize: 12,
     alignItems: 'center',
+    height: "75%",
   },
   nextStep: {
     alignItems: 'center',
+    height: "15%",
+  },
+  nextTitle: {
+    fontSize: 18,
+    color: Colors.lighter,
+  },
+  nextName: {
+    fontSize: 18,
+    color: Colors.lighter,
+  },
+  nextDuration: {
+    fontSize: 18,
+    color: Colors.lighter,
   },
   work: {
-    backgroundColor: 'red',
+    backgroundColor: Colors.red,
     width: '100%',
   },
   prepare: {
-    backgroundColor: 'mediumblue',
+    backgroundColor: Colors.blue,
     width: '100%',
   },
   pause: {
-    backgroundColor: 'green',
+    backgroundColor: Colors.green,
     width: '100%',
   },
   textInput: {

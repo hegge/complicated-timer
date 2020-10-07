@@ -17,4 +17,9 @@ export default {
   light: '#DAE1E7',
   dark: '#444',
   black: '#000',
+  red: '#EF476F',
+  yellow: '#FFD166',
+  blue: '#118AB2',
+  green: '#06D6A0',
+  darkblue: '#073B4C',
 };
