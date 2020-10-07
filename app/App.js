@@ -179,7 +179,32 @@ const Play = ({ route, navigation }) => {
             }}
             title={isRunning ? "Pause" : "Start"}
           />
-          <View style={styles.stepProgressBar} />
+          <View
+            style={{
+              flexDirection: "row",
+              paddingVertical: 12,
+              justifyContent: 'space-between'
+            }}>
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                {
+                  isRunning ?
+                    setTimerValue(currentStepDuration) :
+                    setCurrentStep(currentStep - 1)
+                }
+                setIsRunning(false);
+              }}
+              title="Back" />
+            <View style={styles.stepProgressBar} />
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                setCurrentStep(currentStep + 1);
+                setIsRunning(false);
+              }}
+              title="Next" />
+          </View>
           <View style={styles.sessionProgressBar} />
         </View>
       </View >
@@ -235,11 +260,58 @@ const emptyRepeat = () => {
   );
 }
 
+const RepeatSessionItem = ({ repetitions, item, }) => (
+  <View style={styles.editItemContainer}>
+    <View style={styles.repeat} >
+      <Pressable
+        style={{
+          flexDirection: "row",
+        }}
+        onPress={() => {
+        }}>
+        <Text>Repeat</Text>
+        <Text>{repetitions}</Text>
+      </Pressable>
+    </View>
+  </View>
+);
+
+const CountdownSessionItem = ({ category, duration, item, }) => {
+  const itemStyle = category === "work" ?
+    styles.work :
+    category == "pause" ?
+      styles.pause :
+      styles.prepare;
+
+  return <View style={styles.editItemContainer}>
+    <View style={itemStyle}>
+      <Pressable
+        style={{
+          flexDirection: "row",
+        }}
+        onPress={() => {
+        }}>
+        <Text>{category}</Text>
+        <Text>{duration}</Text>
+      </Pressable>
+    </View>
+  </View>
+};
+
 const EditSession = ({ route, navigation }) => {
   const { item } = route.params;
 
   const [session, setSession] = React.useState(item.session);
   console.log(item.session);
+
+  const renderSessionItem = ({ item }) => {
+    if (item.type === "repeat") {
+      return <RepeatSessionItem repetitions={item.repetitions} item={item} />;
+    } else {
+      return <CountdownSessionItem category={item.category} duration={item.duration} item={item} />
+    }
+  };
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -248,6 +320,10 @@ const EditSession = ({ route, navigation }) => {
           <UselessTextInput style={styles.textInput} text={item.name} placeholder="Enter name" />
           <UselessTextInput style={styles.textInput} text={item.description} placeholder="Enter description" />
         </View>
+        <FlatList
+          data={session}
+          renderItem={renderSessionItem}
+        />
         <Button
           color={Colors.darkblue}
           onPress={() => {
@@ -346,10 +422,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.green,
     width: '100%',
   },
+  repeat: {
+    backgroundColor: Colors.yellow,
+    width: '100%',
+  },
   textInput: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
+  },
+  editItemContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    width: "100%",
   },
   highlight: {
     fontWeight: '700',
