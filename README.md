@@ -4,50 +4,57 @@ Timer app written in React Native, heavily inspired by Complex Timer.
 Session format
 ==============
 
+```
 [{
-	"name": "4x4 :3'",
-	"description": "Fixed length intervals",
+    "name": "4x4 :3'",
+    "description": "Fixed length intervals",
     "id": "1",
-	"session": [{
-		"type": "repeat",
-		"repetitions": 4,
-		"group": [{
-			"type": "countdown",
-			"category": "work",
-			"duration": 240
-		},
-		{
-			"type": "countdown",
-			"category": "pause",
-			"duration": 180
-		},
-        ...,
+    "session": [{
+        "type": "repeat",
+        "repetitions": 4,
+        "group": [{
+            "type": "countdown",
+            "category": "work",
+            "duration": 240
+        },
         {
-			"type": "countdown" / "timer"
-			"category": "work" / "pause" / "prepare"
-			"duration": time_in_seconds
+            "type": "countdown",
+            "category": "pause",
+            "duration": 180
+        },
+        {
+            "type": "countdown" / "timer",
+            "category": "work" / "pause" / "prepare",
+            "duration": time_in_seconds
         },
         {
             "type": "repeat",
             "repetitions": 4,
-            "skip": "first" / "last" / "1,2,3"
             "group": [{
-                "type": "repeat",
-                "repetitions": 2,
-                "group": ...
-                }]
+                "type": "countdown",
+                "category": "pause",
+                "skip": "first" / "last" / "1,2,3",
+                "pause_when_complete": true,
+                "duration": 240
+            },
+            {
+                "type": "countdown",
+                "category": "work",
+                "duration": 180
+            }]
         }]
-	}]
+    }]
 },
 {
-	"name": "3x7 x7" :3"/3'",
-	"description": "Intermittent dead-hangs",
+    "name": "3x7 x7" :3"/3'",
+    "description": "Intermittent dead-hangs",
     "id": unique_string,
-	"session": ...
+    "session": ...
 },
 {
-	"name": "2x3 x10" :3'",
-	"description": "Max weight dead-hangs",
+    "name": "2x3 x10" :3'",
+    "description": "Max weight dead-hangs",
     "id": unique_string,
-	"session": ...
+    "session": ...
 }]
+```
