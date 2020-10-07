@@ -49,6 +49,14 @@ const App = () => {
           name="EditSession"
           component={EditSession}
           options={{ title: 'Edit session' }} />
+        <Stack.Screen
+          name="EditRepeat"
+          component={EditRepeat}
+          options={{ title: 'Edit repeat' }} />
+        <Stack.Screen
+          name="EditCountdown"
+          component={EditCountdown}
+          options={{ title: 'Edit countdown' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -147,31 +155,155 @@ const SessionList = ({ navigation }) => {
   );
 };
 
+const capitalize = (str) => (
+  str.charAt(0).toUpperCase() + str.slice(1)
+)
+
+const formatDuration = (duration) => {
+  if (duration < 3600) {
+    return new Date(duration * 1000).toISOString().substr(14, 5);
+  } else {
+    return new Date(duration * 1000).toISOString().substr(11, 8);
+  }
+}
+
+const itemStyle = (category) => {
+  switch (category) {
+    case "work":
+      return styles.work;
+    case "pause":
+    case "done":
+      return styles.pause;
+    case "prepare":
+      return styles.prepare;
+  }
+}
+
+const getDoneSessionEntry = () => (
+  { category: "done", duration: 0 }
+)
+
+const getSessionProgress = (session, index) => {
+  var count = 0;
+
+  for (var i = 0; i < session.length; i++) {
+    var entry = session[i];
+
+    if (entry.type === "repeat") {
+      for (var ii = 0; ii < entry.repetitions; ii++) {
+        for (var j = 0; j < entry.group.length; j++) {
+          var subEntry = entry.group[j];
+
+          if (subEntry.type === "repeat") {
+            for (var jj = 0; jj < subEntry.repetitions; jj++) {
+              for (var k = 0; k < subEntry.group.length; k++) {
+                var subSubEntry = subEntry.group[k];
+
+                if (subSubEntry.type === "repeat") {
+                  console.log("Deep nesting not supported");
+                } else {
+                  if (count == index) {
+                    return (ii + 1).toString() + "/" + entry.repetitions +
+                      (jj + 1).toString() + "/" + subEntry.repetitions;
+                  }
+                  count++;
+                }
+              }
+            }
+          } else {
+            if (count == index) {
+              return (ii + 1).toString() + "/" + entry.repetitions;
+            }
+            count++;
+          }
+        }
+      }
+    } else {
+      if (count == index) {
+        return "";
+      }
+      count++;
+    }
+  }
+  return "";
+}
+
+const getSessionEntry = (session, index) => {
+  var unrolled = [];
+
+  for (var i = 0; i < session.length; i++) {
+    var entry = session[i];
+
+    if (entry.type === "repeat") {
+      for (var ii = 0; ii < entry.repetitions; ii++) {
+        for (var j = 0; j < entry.group.length; j++) {
+          var subEntry = entry.group[j];
+
+          if (subEntry.type === "repeat") {
+            for (var jj = 0; jj < subEntry.repetitions; jj++) {
+              for (var k = 0; k < subEntry.group.length; k++) {
+                var subSubEntry = subEntry.group[k];
+
+                if (subSubEntry.type === "repeat") {
+                  console.log("Deep nesting not supported");
+                } else {
+                  unrolled.push(subSubEntry);
+                }
+              }
+            }
+          } else {
+            unrolled.push(subEntry);
+          }
+        }
+      }
+    } else {
+      unrolled.push(entry);
+    }
+  }
+
+  if (index < unrolled.length) {
+    return unrolled[index];
+  } else {
+    return getDoneSessionEntry();
+  }
+}
+
 const Play = ({ route, navigation }) => {
   const { item } = route.params;
 
-  const [timerValue, setTimerValue] = useState(20);
+  const [session, setSession] = useState(item.session);
+  const [timerValue, setTimerValue] = useState(-1);
   const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStepCount, setCurrentStepCount] = useState(0);
 
-  const progress = "1/2 1/3";
+  const currentStep = getSessionEntry(session, currentStepCount);
+  const nextStep = getSessionEntry(session, currentStepCount + 1);
+  const progress = getSessionProgress(session, currentStepCount);
 
-  const currentStepName = "Prepare"
-  const currentStepDuration = 20;
-  const currentStepCategory = "prepare";
+  useEffect(() => {
+    if (isRunning) {
+      const interval = setInterval(() => {
+        setTimerValue(timerValue - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  });
 
-  const nextStepName = "Work";
-  const nextStepDuration = 7;
-  const nextStepCategory = "work";
+  useEffect(() => {
+    if (timerValue < 0) {
+      setTimerValue(nextStep.duration);
+      setCurrentStepCount(currentStepCount + 1);
+    }
+  });
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.prepare}>
+      <View style={itemStyle(currentStep.category)}>
         <View style={styles.currentStep}>
           <Text style={styles.stepProgress}>{progress}</Text>
-          <Text style={styles.stepName}>{currentStepName}</Text>
-          <Text style={styles.timer}>{timerValue}</Text>
+          <Text style={styles.stepName}>{capitalize(currentStep.category)}</Text>
+          <Text style={styles.timer}>{formatDuration(timerValue)}</Text>
           <Button
             color={Colors.darkblue}
             onPress={() => {
@@ -179,6 +311,7 @@ const Play = ({ route, navigation }) => {
             }}
             title={isRunning ? "Pause" : "Start"}
           />
+          <View style={styles.stepProgressBar} />
           <View
             style={{
               flexDirection: "row",
@@ -188,32 +321,34 @@ const Play = ({ route, navigation }) => {
             <Button
               color={Colors.darkblue}
               onPress={() => {
+                console.log("clicked");
                 {
                   isRunning ?
-                    setTimerValue(currentStepDuration) :
-                    setCurrentStep(currentStep - 1)
+                    setTimerValue(currentStep.duration) :
+                    setCurrentStepCount(currentStepCount - 1)
                 }
                 setIsRunning(false);
               }}
               title="Back" />
-            <View style={styles.stepProgressBar} />
+            <View style={styles.sessionProgressBar} />
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                setCurrentStep(currentStep + 1);
+                setCurrentStepCount(currentStepCount + 1);
                 setIsRunning(false);
               }}
               title="Next" />
           </View>
-          <View style={styles.sessionProgressBar} />
         </View>
       </View >
 
-      <View style={styles.work}>
+      <View style={itemStyle(nextStep.category)}>
         <View style={styles.nextStep}>
           <Text style={styles.nextTitle}>Next</Text>
-          <Text style={styles.nextName}>{nextStepName}</Text>
-          <Text style={styles.nextDuration}>00:0{nextStepDuration}</Text>
+          <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
+          {nextStep.category === "done" ||
+            <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
+          }
         </View>
       </View>
 
@@ -229,7 +364,7 @@ const Play = ({ route, navigation }) => {
 };
 
 const UselessTextInput = ({ text, placeholder }) => {
-  const [value, setText] = React.useState(text);
+  const [value, setText] = useState(text);
 
   return (
     <TextInput
@@ -260,55 +395,90 @@ const emptyRepeat = () => {
   );
 }
 
-const RepeatSessionItem = ({ repetitions, item, }) => (
-  <View style={styles.editItemContainer}>
+const RepeatSessionItem = ({ repetitions, item, navigation }) => {
+  const indent = 'nested' in item ? item.nested * 24 : 0;
+
+  return <View style={styles.editItemContainer}>
     <View style={styles.repeat} >
       <Pressable
         style={{
           flexDirection: "row",
+          marginStart: indent,
         }}
         onPress={() => {
+          navigation.navigate('EditRepeat', { item: item })
         }}>
         <Text>Repeat</Text>
         <Text>{repetitions}</Text>
       </Pressable>
     </View>
   </View>
-);
+};
 
-const CountdownSessionItem = ({ category, duration, item, }) => {
-  const itemStyle = category === "work" ?
-    styles.work :
-    category == "pause" ?
-      styles.pause :
-      styles.prepare;
+const CountdownSessionItem = ({ category, duration, item, navigation }) => {
+  const indent = 'nested' in item ? item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
-    <View style={itemStyle}>
+    <View style={itemStyle(category)}>
       <Pressable
         style={{
           flexDirection: "row",
+          marginStart: indent,
         }}
         onPress={() => {
+          navigation.navigate('EditCountdown', { item: item })
         }}>
-        <Text>{category}</Text>
+        <Text>{capitalize(category)}</Text>
         <Text>{duration}</Text>
       </Pressable>
     </View>
   </View>
 };
 
+function extend(target, source) {
+  for (var key in source) {
+    target[key] = source[key];
+  }
+  return target;
+}
+
+const flattenSession = (session) => {
+  var flattened = [];
+  for (var i = 0; i < session.length; i++) {
+    var entry = session[i];
+    flattened.push(entry);
+
+    if (entry.type === "repeat") {
+      for (var j = 0; j < entry.group.length; j++) {
+        var subEntry = entry.group[j];
+        flattened.push(extend(subEntry, { nested: 1 }));
+
+        if (subEntry.type === "repeat") {
+          for (var k = 0; k < subEntry.group.length; k++) {
+            var subSubEntry = subEntry.group[k];
+            flattened.push(extend(subSubEntry, { nested: 2 }));
+
+            if (subSubEntry.type === "repeat") {
+              console.log("Deep nesting not supported");
+            }
+          }
+        }
+      }
+    }
+  }
+  return flattened;
+}
+
 const EditSession = ({ route, navigation }) => {
   const { item } = route.params;
 
-  const [session, setSession] = React.useState(item.session);
-  console.log(item.session);
+  const [session, setSession] = useState(item.session);
 
   const renderSessionItem = ({ item }) => {
     if (item.type === "repeat") {
-      return <RepeatSessionItem repetitions={item.repetitions} item={item} />;
+      return <RepeatSessionItem repetitions={item.repetitions} item={item} navigation={navigation} />;
     } else {
-      return <CountdownSessionItem category={item.category} duration={item.duration} item={item} />
+      return <CountdownSessionItem category={item.category} duration={item.duration} item={item} navigation={navigation} />
     }
   };
 
@@ -321,7 +491,7 @@ const EditSession = ({ route, navigation }) => {
           <UselessTextInput style={styles.textInput} text={item.description} placeholder="Enter description" />
         </View>
         <FlatList
-          data={session}
+          data={flattenSession(session)}
           renderItem={renderSessionItem}
         />
         <Button
@@ -338,6 +508,43 @@ const EditSession = ({ route, navigation }) => {
           }}
           title="Add repeat"
         />
+      </View>
+    </>
+  );
+};
+
+const EditRepeat = ({ route, navigation }) => {
+  const { item } = route.params;
+  console.log("EditRepeat");
+  console.log(item);
+  console.log(item.repetitions);
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.body}>
+        <View style={styles.sectionContainer}>
+          <UselessTextInput style={styles.textInput} text={item.repetitions.toString()} placeholder="Enter repetitions" />
+        </View>
+      </View>
+    </>
+  );
+};
+
+const EditCountdown = ({ route, navigation }) => {
+  const { item } = route.params;
+  console.log("EditCountdown");
+  console.log(item);
+  console.log(item.duration);
+  console.log(item.category);
+
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.body}>
+        <View style={styles.sectionContainer}>
+          <UselessTextInput style={styles.textInput} text={item.duration.toString()} placeholder="Enter duration" />
+          <UselessTextInput style={styles.textInput} text={item.category} placeholder="Enter category" />
+        </View>
       </View>
     </>
   );
