@@ -99,7 +99,7 @@ const SessionList = ({ navigation }) => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch('http://enophook.resisty.net/~torstein/sessions.json')
+    fetch('https://complicated-timer.herokuapp.com/sessions')
       .then((response) => response.json())
       .then((json) => setData(json))
       .catch((error) => console.error(error))

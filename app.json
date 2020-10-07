@@ -1,0 +1,5 @@
+{
+  "name": "Complicated Timer",
+  "description": "Complicated Timer backend",
+  "image": "heroku/clojure"
+}

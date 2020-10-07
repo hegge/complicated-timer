@@ -41,10 +41,10 @@
 
   :min-lein-version "2.0.0"
   
-  :source-paths ["src/clj" "src/cljs" "src/cljc"]
-  :test-paths ["test/clj"]
-  :resource-paths ["resources" "target/cljsbuild"]
-  :target-path "target/%s/"
+  :source-paths ["web/src/clj" "web/src/cljs" "web/src/cljc"]
+  :test-paths ["web/test/clj"]
+  :resource-paths ["web/resources" "web/target/cljsbuild"]
+  :target-path "web/target/%s/"
   :main ^:skip-aot complicated-timer.core
 
   :plugins [[lein-cljsbuild "1.1.7"]] 
@@ -52,9 +52,9 @@
   [:target-path [:cljsbuild :builds :app :compiler :output-dir] [:cljsbuild :builds :app :compiler :output-to]]
   :figwheel
   {:http-server-root "public"
-   :server-logfile "log/figwheel-logfile.log"
+   :server-logfile "web/log/figwheel-logfile.log"
    :nrepl-port 7002
-   :css-dirs ["resources/public/css"]
+   :css-dirs ["web/resources/public/css"]
    :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
   
 
@@ -63,11 +63,11 @@
              :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
              :cljsbuild{:builds
               {:min
-               {:source-paths ["src/cljc" "src/cljs" "env/prod/cljs"]
+               {:source-paths ["web/src/cljc" "web/src/cljs" "web/env/prod/cljs"]
                 :compiler
-                {:output-dir "target/cljsbuild/public/js"
-                 :output-to "target/cljsbuild/public/js/app.js"
-                 :source-map "target/cljsbuild/public/js/app.js.map"
+                {:output-dir "web/target/cljsbuild/public/js"
+                 :output-to "web/target/cljsbuild/public/js/app.js"
+                 :source-map "web/target/cljsbuild/public/js/app.js.map"
                  :optimizations :advanced
                  :pretty-print false
                  :infer-externs true
@@ -77,8 +77,8 @@
              
              :aot :all
              :uberjar-name "complicated-timer.jar"
-             :source-paths ["env/prod/clj" ]
-             :resource-paths ["env/prod/resources"]}
+             :source-paths ["web/env/prod/clj" ]
+             :resource-paths ["web/env/prod/resources"]}
 
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
@@ -99,14 +99,14 @@
                                  [lein-figwheel "0.5.20"]] 
                   :cljsbuild{:builds
                    {:app
-                    {:source-paths ["src/cljs" "src/cljc" "env/dev/cljs"]
+                    {:source-paths ["web/src/cljs" "web/src/cljc" "web/env/dev/cljs"]
                      :figwheel {:on-jsload "complicated-timer.core/mount-components"}
                      :compiler
-                     {:output-dir "target/cljsbuild/public/js/out"
+                     {:output-dir "web/target/cljsbuild/public/js/out"
                       :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}
                       :optimizations :none
                       :preloads [re-frisk.preload]
-                      :output-to "target/cljsbuild/public/js/app.js"
+                      :output-to "web/target/cljsbuild/public/js/app.js"
                       :asset-path "/js/out"
                       :source-map true
                       :main "complicated-timer.app"
@@ -114,20 +114,20 @@
                   
                   
                   :doo {:build "test"}
-                  :source-paths ["env/dev/clj" ]
-                  :resource-paths ["env/dev/resources"]
+                  :source-paths ["web/env/dev/clj" ]
+                  :resource-paths ["web/env/dev/resources"]
                   :repl-options {:init-ns user
                                  :timeout 120000}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
    :project/test {:jvm-opts ["-Dconf=test-config.edn" ]
-                  :resource-paths ["env/test/resources"] 
+                  :resource-paths ["web/env/test/resources"] 
                   :cljsbuild 
                   {:builds
                    {:test
-                    {:source-paths ["src/cljc" "src/cljs" "test/cljs"]
+                    {:source-paths ["web/src/cljc" "web/src/cljs" "web/test/cljs"]
                      :compiler
-                     {:output-to "target/test.js"
+                     {:output-to "web/target/test.js"
                       :main "complicated-timer.doo-runner"
                       :optimizations :whitespace
                       :pretty-print true}}}}
