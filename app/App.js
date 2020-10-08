@@ -132,13 +132,21 @@ const SessionList = ({ navigation }) => {
         <Header />
         <View style={styles.body}>
           <View style={{ flex: 1 }}>
-            {isLoading ? <ActivityIndicator /> : (
-              <FlatList
-                data={data}
-                keyExtractor={({ id }, index) => id}
-                renderItem={renderSessionListItem}
-              />
-            )}
+            {isLoading ?
+              <View style={{
+                flex: 1,
+                justifyContent: "center",
+                padding: 10
+              }}>
+                <ActivityIndicator size="large" color={Colors.darkblue} />
+              </View>
+              : (
+                <FlatList
+                  data={data}
+                  keyExtractor={({ id }, index) => id}
+                  renderItem={renderSessionListItem}
+                />
+              )}
             <Button
               color={Colors.darkblue}
               onPress={() => {
@@ -158,6 +166,16 @@ const SessionList = ({ navigation }) => {
 const capitalize = (str) => (
   str.charAt(0).toUpperCase() + str.slice(1)
 )
+
+const formatDurationCompact = (duration) => {
+  if (duration < 60) {
+    return new Date(duration * 1000).toISOString().substr(17, 2);
+  } else if (duration < 3600) {
+    return new Date(duration * 1000).toISOString().substr(14, 5);
+  } else {
+    return new Date(duration * 1000).toISOString().substr(11, 8);
+  }
+}
 
 const formatDuration = (duration) => {
   if (duration < 3600) {
@@ -203,7 +221,7 @@ const getSessionProgress = (session, index) => {
                   console.log("Deep nesting not supported");
                 } else {
                   if (count == index) {
-                    return (ii + 1).toString() + "/" + entry.repetitions +
+                    return (ii + 1).toString() + "/" + entry.repetitions + "  " +
                       (jj + 1).toString() + "/" + subEntry.repetitions;
                   }
                   count++;
@@ -299,57 +317,53 @@ const Play = ({ route, navigation }) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <View style={itemStyle(currentStep.category)}>
-        <View style={styles.currentStep}>
-          <Text style={styles.stepProgress}>{progress}</Text>
-          <Text style={styles.stepName}>{capitalize(currentStep.category)}</Text>
-          <Text style={styles.timer}>{formatDuration(timerValue)}</Text>
+      <View style={[styles.currentStep, itemStyle(currentStep.category)]}>
+        <Text style={styles.stepProgress}>{progress}</Text>
+        <Text style={styles.stepName}>{capitalize(currentStep.category)}</Text>
+        <Text style={styles.timer}>{formatDurationCompact(timerValue)}</Text>
+        <Button
+          color={Colors.darkblue}
+          onPress={() => {
+            setIsRunning(!isRunning);
+          }}
+          title={isRunning ? "Pause" : "Start"}
+        />
+        <View style={styles.stepProgressBar} />
+        <View
+          style={{
+            flexDirection: "row",
+            paddingVertical: 12,
+            justifyContent: 'space-between'
+          }}>
           <Button
             color={Colors.darkblue}
             onPress={() => {
-              setIsRunning(!isRunning);
+              console.log("clicked");
+              {
+                isRunning ?
+                  setTimerValue(currentStep.duration) :
+                  setCurrentStepCount(currentStepCount - 1)
+              }
+              setIsRunning(false);
             }}
-            title={isRunning ? "Pause" : "Start"}
-          />
-          <View style={styles.stepProgressBar} />
-          <View
-            style={{
-              flexDirection: "row",
-              paddingVertical: 12,
-              justifyContent: 'space-between'
-            }}>
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                console.log("clicked");
-                {
-                  isRunning ?
-                    setTimerValue(currentStep.duration) :
-                    setCurrentStepCount(currentStepCount - 1)
-                }
-                setIsRunning(false);
-              }}
-              title="Back" />
-            <View style={styles.sessionProgressBar} />
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                setCurrentStepCount(currentStepCount + 1);
-                setIsRunning(false);
-              }}
-              title="Next" />
-          </View>
+            title="Back" />
+          <View style={styles.sessionProgressBar} />
+          <Button
+            color={Colors.darkblue}
+            onPress={() => {
+              setCurrentStepCount(currentStepCount + 1);
+              setIsRunning(false);
+            }}
+            title="Next" />
         </View>
-      </View >
+      </View>
 
-      <View style={itemStyle(nextStep.category)}>
-        <View style={styles.nextStep}>
-          <Text style={styles.nextTitle}>Next</Text>
-          <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
-          {nextStep.category === "done" ||
-            <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
-          }
-        </View>
+      <View style={[styles.nextStep, itemStyle(nextStep.category)]}>
+        <Text style={styles.nextTitle}>Next</Text>
+        <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
+        {nextStep.category === "done" ||
+          <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
+        }
       </View>
 
       <Button
@@ -399,19 +413,19 @@ const RepeatSessionItem = ({ repetitions, item, navigation }) => {
   const indent = 'nested' in item ? item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
-    <View style={styles.repeat} >
-      <Pressable
-        style={{
+    <Pressable
+      style={[
+        styles.repeat,
+        {
           flexDirection: "row",
           marginStart: indent,
-        }}
-        onPress={() => {
-          navigation.navigate('EditRepeat', { item: item })
-        }}>
-        <Text>Repeat</Text>
-        <Text>{repetitions}</Text>
-      </Pressable>
-    </View>
+        }]}
+      onPress={() => {
+        navigation.navigate('EditRepeat', { item: item })
+      }}>
+      <Text>Repeat</Text>
+      <Text>{repetitions}</Text>
+    </Pressable>
   </View>
 };
 
@@ -419,19 +433,19 @@ const CountdownSessionItem = ({ category, duration, item, navigation }) => {
   const indent = 'nested' in item ? item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
-    <View style={itemStyle(category)}>
-      <Pressable
-        style={{
+    <Pressable
+      style={[
+        itemStyle(category),
+        {
           flexDirection: "row",
           marginStart: indent,
-        }}
-        onPress={() => {
-          navigation.navigate('EditCountdown', { item: item })
-        }}>
-        <Text>{capitalize(category)}</Text>
-        <Text>{duration}</Text>
-      </Pressable>
-    </View>
+        }]}
+      onPress={() => {
+        navigation.navigate('EditCountdown', { item: item })
+      }}>
+      <Text>{capitalize(category)}</Text>
+      <Text>{duration}</Text>
+    </Pressable>
   </View>
 };
 
