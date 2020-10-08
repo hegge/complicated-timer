@@ -116,6 +116,11 @@
                                        :skip "first"
                                        }
                                       {
+                                       :type "countdown"
+                                       :category "prepare"
+                                       :duration 20
+                                       }
+                                      {
                                        :type "repeat"
                                        :repetitions 7
                                        :description "Reps"
