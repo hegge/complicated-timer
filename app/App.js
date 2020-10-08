@@ -163,22 +163,14 @@ const SessionList = ({ navigation }) => {
   );
 };
 
-const capitalize = (str) => (
+export const capitalize = (str) => (
   str.charAt(0).toUpperCase() + str.slice(1)
 )
 
-const formatDurationCompact = (duration) => {
-  if (duration < 60) {
+export const formatDuration = (duration, compact = false) => {
+  if (duration < 60 && compact) {
     return new Date(duration * 1000).toISOString().substr(17, 2);
   } else if (duration < 3600) {
-    return new Date(duration * 1000).toISOString().substr(14, 5);
-  } else {
-    return new Date(duration * 1000).toISOString().substr(11, 8);
-  }
-}
-
-const formatDuration = (duration) => {
-  if (duration < 3600) {
     return new Date(duration * 1000).toISOString().substr(14, 5);
   } else {
     return new Date(duration * 1000).toISOString().substr(11, 8);
@@ -197,93 +189,89 @@ const itemStyle = (category) => {
   }
 }
 
-const getDoneSessionEntry = () => (
-  { category: "done", duration: 0 }
-)
+const doneSessionEntry = {
+  category: "done",
+  duration: 0
+}
 
-const getSessionProgress = (session, index) => {
+export const getSessionProgress = (session, index) => {
+  var progress = "";
+  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+    if (total1 === 0) {
+      progress = "";
+    } else if (total2 === 0) {
+      progress = (rep1 + 1) + "/" + total1;
+    } else {
+      progress = (rep1 + 1) + "/" + total1 + " " + (rep2 + 1) + "/" + total2;
+    }
+    if (index === count) {
+      entryAtIndex = entry;
+      return true;
+    } else {
+      return false;
+    }
+  });
+  return progress
+}
+
+export const getSessionEntry = (session, index) => {
+  var entryAtIndex;
+  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+    if (index === count) {
+      entryAtIndex = entry;
+      return true;
+    } else {
+      return false;
+    }
+  });
+  return entryAtIndex;
+}
+
+const isSkipped = (entry, parentEntry, repNumber) => {
+  return ('skip' in entry &&
+    (entry.skip === 'first' && repNumber === 0) ||
+    (entry.skip === 'last' && repNumber === (parentEntry.repetitions - 1)));
+}
+
+export const traverseSession = (session, callback) => {
   var count = 0;
 
   for (var i = 0; i < session.length; i++) {
     var entry = session[i];
 
-    if (entry.type === "repeat") {
+    if (entry.type !== "repeat") {
+      if (callback(entry, count++, 0, 0, 0, 0)) {
+        return;
+      }
+    } else {
       for (var ii = 0; ii < entry.repetitions; ii++) {
         for (var j = 0; j < entry.group.length; j++) {
           var subEntry = entry.group[j];
 
-          if (subEntry.type === "repeat") {
+          if (subEntry.type !== "repeat") {
+            if (!isSkipped(subEntry, entry, ii) && callback(subEntry, count++, ii, entry.repetitions, 0, 0)) {
+              return;
+            }
+          } else {
             for (var jj = 0; jj < subEntry.repetitions; jj++) {
               for (var k = 0; k < subEntry.group.length; k++) {
                 var subSubEntry = subEntry.group[k];
 
-                if (subSubEntry.type === "repeat") {
-                  console.log("Deep nesting not supported");
-                } else {
-                  if (count == index) {
-                    return (ii + 1).toString() + "/" + entry.repetitions + "  " +
-                      (jj + 1).toString() + "/" + subEntry.repetitions;
+                if (subSubEntry.type !== "repeat") {
+                  if (!isSkipped(subSubEntry, subEntry, jj) && callback(subSubEntry, count++, ii, entry.repetitions, jj, subEntry.repetitions)) {
+                    return;
                   }
-                  count++;
-                }
-              }
-            }
-          } else {
-            if (count == index) {
-              return (ii + 1).toString() + "/" + entry.repetitions;
-            }
-            count++;
-          }
-        }
-      }
-    } else {
-      if (count == index) {
-        return "";
-      }
-      count++;
-    }
-  }
-  return "";
-}
-
-const getSessionEntry = (session, index) => {
-  var unrolled = [];
-
-  for (var i = 0; i < session.length; i++) {
-    var entry = session[i];
-
-    if (entry.type === "repeat") {
-      for (var ii = 0; ii < entry.repetitions; ii++) {
-        for (var j = 0; j < entry.group.length; j++) {
-          var subEntry = entry.group[j];
-
-          if (subEntry.type === "repeat") {
-            for (var jj = 0; jj < subEntry.repetitions; jj++) {
-              for (var k = 0; k < subEntry.group.length; k++) {
-                var subSubEntry = subEntry.group[k];
-
-                if (subSubEntry.type === "repeat") {
-                  console.log("Deep nesting not supported");
                 } else {
-                  unrolled.push(subSubEntry);
+                  throw new Error("Deep nesting not supported");
                 }
               }
             }
-          } else {
-            unrolled.push(subEntry);
           }
         }
       }
-    } else {
-      unrolled.push(entry);
     }
   }
-
-  if (index < unrolled.length) {
-    return unrolled[index];
-  } else {
-    return getDoneSessionEntry();
-  }
+  callback(doneSessionEntry, count++);
 }
 
 const Play = ({ route, navigation }) => {
@@ -320,7 +308,7 @@ const Play = ({ route, navigation }) => {
       <View style={[styles.currentStep, itemStyle(currentStep.category)]}>
         <Text style={styles.stepProgress}>{progress}</Text>
         <Text style={styles.stepName}>{capitalize(currentStep.category)}</Text>
-        <Text style={styles.timer}>{formatDurationCompact(timerValue)}</Text>
+        <Text style={styles.timer}>{formatDuration(timerValue, compact = true)}</Text>
         <Button
           color={Colors.darkblue}
           onPress={() => {
@@ -389,24 +377,16 @@ const UselessTextInput = ({ text, placeholder }) => {
   );
 }
 
-const emptyStep = () => {
-  return (
-    {
-      "type": "countdown",
-      "category": "work",
-      "duration": 60
-    }
-  );
+const emptyStep = {
+  "type": "countdown",
+  "category": "work",
+  "duration": 60
 }
 
-const emptyRepeat = () => {
-  return (
-    {
-      "type": "repeat",
-      "repetitions": 4,
-      "group": []
-    }
-  );
+const emptyRepeat = {
+  "type": "repeat",
+  "repetitions": 4,
+  "group": []
 }
 
 const RepeatSessionItem = ({ repetitions, item, navigation }) => {
@@ -466,18 +446,18 @@ const flattenSession = (session) => {
     var entry = session[i];
     flattened.push(entry);
 
-    if (entry.type === "repeat") {
+    if ('group' in entry) {
       for (var j = 0; j < entry.group.length; j++) {
         var subEntry = entry.group[j];
         flattened.push(extend(subEntry, { nested: 1 }));
 
-        if (subEntry.type === "repeat") {
+        if ('group' in subEntry) {
           for (var k = 0; k < subEntry.group.length; k++) {
             var subSubEntry = subEntry.group[k];
             flattened.push(extend(subSubEntry, { nested: 2 }));
 
             if (subSubEntry.type === "repeat") {
-              console.log("Deep nesting not supported");
+              throw new Error("Deep nesting not supported");
             }
           }
         }
