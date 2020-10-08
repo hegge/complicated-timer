@@ -87,12 +87,24 @@ const SessionListItem = ({ name, description, duration, workDuration, item, navi
           justifyContent: "flex-end",
           flex: 0,
         }}>
-        <Text style={styles.sessionDuration}>{duration}</Text>
-        <Text style={styles.sessionWorkDuration}>{workDuration}</Text>
+        <Text style={styles.sessionDuration}>{formatDuration(duration)}</Text>
+        <Text style={styles.sessionWorkDuration}>{formatDuration(workDuration)}</Text>
       </View>
     </Pressable>
   </View>
 );
+
+export const getSessionDuration = (session) => {
+  var totalDuration = 0;
+  var totalWorkDuration = 0;
+  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+    totalDuration += entry.duration;
+    if (entry.category === "work") {
+      totalWorkDuration += entry.duration;
+    }
+  });
+  return {totalDuration, totalWorkDuration};
+}
 
 const SessionList = ({ navigation }) => {
   const [isLoading, setLoading] = useState(true);
@@ -106,11 +118,15 @@ const SessionList = ({ navigation }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const renderSessionListItem = ({ item }) => (
-    <SessionListItem name={item.name} description={item.description}
-      duration="14:00" workDuration="10:00"
-      item={item} navigation={navigation} />
-  );
+  const renderSessionListItem = ({ item }) => {
+    const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
+
+    return (
+      <SessionListItem name={item.name} description={item.description}
+        duration={totalDuration} workDuration={totalWorkDuration}
+        item={item} navigation={navigation} />
+    );
+  }
 
   const emptySession = ({ uuid }) => {
     return (
@@ -143,7 +159,7 @@ const SessionList = ({ navigation }) => {
               : (
                 <FlatList
                   data={data}
-                  keyExtractor={({ id }, index) => id}
+                  keyExtractor={({ id }, index) => id.toString()}
                   renderItem={renderSessionListItem}
                 />
               )}

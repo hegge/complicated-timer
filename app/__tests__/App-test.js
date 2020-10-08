@@ -92,4 +92,5 @@ it('can format duration', () => {
   expect(formatDuration(61)).toBe('01:01');
   expect(formatDuration(59)).toBe('00:59');
   expect(formatDuration(59, compact = true)).toBe('59');
+  expect(formatDuration(0)).toBe('00:00');
 });
