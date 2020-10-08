@@ -419,6 +419,8 @@ const RepeatSessionItem = ({ repetitions, item, navigation }) => {
         {
           flexDirection: "row",
           marginStart: indent,
+          padding: 10,
+          justifyContent: "space-around",
         }]}
       onPress={() => {
         navigation.navigate('EditRepeat', { item: item })
@@ -439,12 +441,14 @@ const CountdownSessionItem = ({ category, duration, item, navigation }) => {
         {
           flexDirection: "row",
           marginStart: indent,
+          padding: 10,
+          justifyContent: "space-around",
         }]}
       onPress={() => {
         navigation.navigate('EditCountdown', { item: item })
       }}>
       <Text>{capitalize(category)}</Text>
-      <Text>{duration}</Text>
+      <Text>{formatDuration(duration)}</Text>
     </Pressable>
   </View>
 };
