@@ -296,11 +296,36 @@ const Play = ({ route, navigation }) => {
   });
 
   useEffect(() => {
-    if (timerValue < 0) {
+    if (isRunning && timerValue < 0) {
       setTimerValue(nextStep.duration);
       setCurrentStepCount(currentStepCount + 1);
     }
   });
+
+  const onPlayPauseClicked = () => {
+    console.log("play/pause clicked")
+    setIsRunning(!isRunning);
+  }
+
+  const onBackClicked = () => {
+    console.log("back clicked")
+    if (isRunning) {
+      setTimerValue(currentStep.duration)
+    } else if (currentStepCount === 0) {
+      // do nothing
+    } else {
+      setCurrentStepCount(currentStepCount - 1)
+    }
+    setIsRunning(false);
+  }
+
+  const onNextClicked = () => {
+    console.log("next clicked")
+    if (currentStepCount.category !== "done") {
+      setCurrentStepCount(currentStepCount + 1);
+    }
+    setIsRunning(false);
+  }
 
   return (
     <>
@@ -311,9 +336,7 @@ const Play = ({ route, navigation }) => {
         <Text style={styles.timer}>{formatDuration(timerValue, compact = true)}</Text>
         <Button
           color={Colors.darkblue}
-          onPress={() => {
-            setIsRunning(!isRunning);
-          }}
+          onPress={() => { onPlayPauseClicked() }}
           title={isRunning ? "Pause" : "Start"}
         />
         <View style={styles.stepProgressBar} />
@@ -325,23 +348,12 @@ const Play = ({ route, navigation }) => {
           }}>
           <Button
             color={Colors.darkblue}
-            onPress={() => {
-              console.log("clicked");
-              {
-                isRunning ?
-                  setTimerValue(currentStep.duration) :
-                  setCurrentStepCount(currentStepCount - 1)
-              }
-              setIsRunning(false);
-            }}
+            onPress={() => { onBackClicked() }}
             title="Back" />
           <View style={styles.sessionProgressBar} />
           <Button
             color={Colors.darkblue}
-            onPress={() => {
-              setCurrentStepCount(currentStepCount + 1);
-              setIsRunning(false);
-            }}
+            onPress={() => { onNextClicked() }}
             title="Next" />
         </View>
       </View>
