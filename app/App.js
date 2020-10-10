@@ -103,7 +103,7 @@ export const getSessionDuration = (session) => {
       totalWorkDuration += entry.duration;
     }
   });
-  return {totalDuration, totalWorkDuration};
+  return { totalDuration, totalWorkDuration };
 }
 
 const SessionList = ({ navigation }) => {
@@ -231,7 +231,7 @@ export const getSessionProgress = (session, index) => {
 }
 
 export const getSessionEntry = (session, index) => {
-  var entryAtIndex;
+  var entryAtIndex = null;
   traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
     if (index === count) {
       entryAtIndex = entry;
@@ -287,20 +287,22 @@ export const traverseSession = (session, callback) => {
       }
     }
   }
-  callback(doneSessionEntry, count++);
+  callback(doneSessionEntry, count++, 0, 0, 0, 0);
 }
 
 const Play = ({ route, navigation }) => {
   const { item } = route.params;
 
   const [session, setSession] = useState(item.session);
-  const [timerValue, setTimerValue] = useState(-1);
-  const [isRunning, setIsRunning] = useState(false);
   const [currentStepCount, setCurrentStepCount] = useState(0);
 
+  const prevStep = getSessionEntry(session, currentStepCount - 1);
   const currentStep = getSessionEntry(session, currentStepCount);
   const nextStep = getSessionEntry(session, currentStepCount + 1);
   const progress = getSessionProgress(session, currentStepCount);
+
+  const [timerValue, setTimerValue] = useState(currentStep.duration);
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     if (isRunning) {
@@ -308,6 +310,13 @@ const Play = ({ route, navigation }) => {
         setTimerValue(timerValue - 1);
       }, 1000);
       return () => clearInterval(interval);
+    }
+  });
+
+  useEffect(() => {
+    if (isRunning && currentStep.category === "done" ) {
+      setIsRunning(false);
+      setTimerValue(0);
     }
   });
 
@@ -326,19 +335,21 @@ const Play = ({ route, navigation }) => {
   const onBackClicked = () => {
     console.log("back clicked")
     if (isRunning) {
-      setTimerValue(currentStep.duration)
+      setTimerValue(currentStep.duration);
     } else if (currentStepCount === 0) {
-      // do nothing
+      setTimerValue(currentStep.duration);
     } else {
-      setCurrentStepCount(currentStepCount - 1)
+      setCurrentStepCount(currentStepCount - 1);
+      setTimerValue(prevStep.duration);
     }
     setIsRunning(false);
   }
 
   const onNextClicked = () => {
     console.log("next clicked")
-    if (currentStepCount.category !== "done") {
+    if (nextStep.category !== "done") {
       setCurrentStepCount(currentStepCount + 1);
+      setTimerValue(nextStep.duration);
     }
     setIsRunning(false);
   }
@@ -374,13 +385,15 @@ const Play = ({ route, navigation }) => {
         </View>
       </View>
 
-      <View style={[styles.nextStep, itemStyle(nextStep.category)]}>
-        <Text style={styles.nextTitle}>Next</Text>
-        <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
-        {nextStep.category === "done" ||
-          <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
-        }
-      </View>
+      {currentStep.category === "done" ||
+        <View style={[styles.nextStep, itemStyle(nextStep.category)]}>
+          <Text style={styles.nextTitle}>Next</Text>
+          <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
+          {nextStep.category === "done" ||
+            <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
+          }
+        </View>
+      }
 
       <Button
         color={Colors.darkblue}
