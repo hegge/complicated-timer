@@ -539,6 +539,7 @@ const EditSession = ({ route, navigation }) => {
         </View>
         <FlatList
           data={flattenSession(session)}
+          keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
           renderItem={renderSessionItem}
         />
         <Button
