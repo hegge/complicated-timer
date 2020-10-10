@@ -116,7 +116,6 @@ const SessionList = ({ navigation }) => {
       .then((json) => setData(json))
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
-      console.log("fetched")
   };
 
   useEffect(() => {
