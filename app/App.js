@@ -525,8 +525,12 @@ const EditSession = ({ route, navigation }) => {
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
-        <View style={styles.sectionContainer}>
+        <View style={styles.descriptiveTextInputContainer}>
+          <Text style={styles.padAfter}>Session name:</Text>
           <UselessTextInput style={styles.textInput} text={item.name} placeholder="Enter name" />
+        </View>
+        <View style={styles.descriptiveTextInputContainer}>
+          <Text style={styles.padAfter}>Session description:</Text>
           <UselessTextInput style={styles.textInput} text={item.description} placeholder="Enter description" />
         </View>
         <FlatList
@@ -554,14 +558,13 @@ const EditSession = ({ route, navigation }) => {
 
 const EditRepeat = ({ route, navigation }) => {
   const { item } = route.params;
-  console.log("EditRepeat");
-  console.log(item);
-  console.log(item.repetitions);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
-        <View style={styles.sectionContainer}>
+        <View style={styles.descriptiveTextInputContainer}>
+          <Text style={styles.padAfter}>Number of repetitions:</Text>
           <UselessTextInput style={styles.textInput} text={item.repetitions.toString()} placeholder="Enter repetitions" />
         </View>
       </View>
@@ -569,20 +572,47 @@ const EditRepeat = ({ route, navigation }) => {
   );
 };
 
+function RadioButton(props) {
+  console.log(props)
+  return (
+    <View style={[{
+      height: 24,
+      width: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: '#000',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }, props.style]}>
+      {
+        props.selected ?
+          <View style={{
+            height: 12,
+            width: 12,
+            borderRadius: 6,
+            backgroundColor: '#000',
+          }} />
+          : null
+      }
+    </View>
+  );
+}
+
 const EditCountdown = ({ route, navigation }) => {
   const { item } = route.params;
-  console.log("EditCountdown");
-  console.log(item);
-  console.log(item.duration);
-  console.log(item.category);
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
-        <View style={styles.sectionContainer}>
+        <View style={styles.descriptiveTextInputContainer}>
+          <Text style={styles.padAfter}>Duration:</Text>
           <UselessTextInput style={styles.textInput} text={item.duration.toString()} placeholder="Enter duration" />
-          <UselessTextInput style={styles.textInput} text={item.category} placeholder="Enter category" />
+        </View>
+        <View style={styles.descriptiveTextInputContainer}>
+          <Text style={styles.padAfter}>Category:</Text>
+          <RadioButton selected={true}></RadioButton>
+          <Text>{item.category}</Text>
         </View>
       </View>
     </>
@@ -638,11 +668,11 @@ const styles = StyleSheet.create({
   currentStep: {
     fontSize: 12,
     alignItems: 'center',
-    height: "75%",
+    flex: 4,
   },
   nextStep: {
     alignItems: 'center',
-    height: "15%",
+    flex: 1,
   },
   nextTitle: {
     fontSize: 18,
@@ -658,19 +688,15 @@ const styles = StyleSheet.create({
   },
   work: {
     backgroundColor: Colors.red,
-    width: '100%',
   },
   prepare: {
     backgroundColor: Colors.blue,
-    width: '100%',
   },
   pause: {
     backgroundColor: Colors.green,
-    width: '100%',
   },
   repeat: {
     backgroundColor: Colors.yellow,
-    width: '100%',
   },
   textInput: {
     height: 40,
@@ -681,6 +707,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     width: "100%",
+  },
+  descriptiveTextInputContainer: {
+    flexDirection: "row",
+    alignItems: 'center',
+    padding: 8,
   },
   highlight: {
     fontWeight: '700',
