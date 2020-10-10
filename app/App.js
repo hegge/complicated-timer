@@ -28,7 +28,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import UUIDGenerator from 'react-native-uuid-generator';
 
 import Colors from './Colors.js';
-import Header from './Header.js';
 
 const Stack = createStackNavigator();
 
@@ -39,7 +38,7 @@ const App = () => {
         <Stack.Screen
           name="SessionList"
           component={SessionList}
-          options={{ title: 'Complicated Timer' }}
+          options={{ title: 'Sessions' }}
         />
         <Stack.Screen
           name="Play"
@@ -110,12 +109,18 @@ const SessionList = ({ navigation }) => {
   const [isLoading, setLoading] = useState(true);
   const [data, setData] = useState([]);
 
-  useEffect(() => {
+  const fetchSessions = () => {
+    setLoading(true);
     fetch('https://complicated-timer.herokuapp.com/sessions')
       .then((response) => response.json())
       .then((json) => setData(json))
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
+      console.log("fetched")
+  };
+
+  useEffect(() => {
+    fetchSessions();
   }, []);
 
   const renderSessionListItem = ({ item }) => {
@@ -142,39 +147,38 @@ const SessionList = ({ navigation }) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={styles.scrollView}>
-        <Header />
-        <View style={styles.body}>
-          <View style={{ flex: 1 }}>
-            {isLoading ?
-              <View style={{
-                flex: 1,
-                justifyContent: "center",
-                padding: 10
-              }}>
-                <ActivityIndicator size="large" color={Colors.darkblue} />
-              </View>
-              : (
-                <FlatList
-                  data={data}
-                  keyExtractor={({ id }, index) => id.toString()}
-                  renderItem={renderSessionListItem}
-                />
-              )}
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                UUIDGenerator.getRandomUUID().then((uuid) => {
-                  setData([...data, emptySession({ uuid })]);
-                });
-              }}
-              title="Create new session"
-            />
-          </View>
+
+      {isLoading ?
+        <View style={{
+          flex: 1,
+          justifyContent: "center",
+          alignContent: "center",
+          padding: 10
+        }}>
+          <ActivityIndicator size="large" color={Colors.darkblue} />
         </View>
-      </ScrollView>
+        : (
+          <FlatList
+            data={data}
+            keyExtractor={({ id }, index) => id.toString()}
+            renderItem={renderSessionListItem}
+            onRefresh={() => { fetchSessions() }}
+            refreshing={isLoading}
+            scrollEnabled={false}
+            ListFooterComponent={
+              !isLoading &&
+              <Button
+                color={Colors.darkblue}
+                onPress={() => {
+                  UUIDGenerator.getRandomUUID().then((uuid) => {
+                    setData([...data, emptySession({ uuid })]);
+                  });
+                }}
+                title="Create new session"
+              />
+            }
+          />
+        )}
     </>
   );
 };
@@ -314,7 +318,7 @@ const Play = ({ route, navigation }) => {
   });
 
   useEffect(() => {
-    if (isRunning && currentStep.category === "done" ) {
+    if (isRunning && currentStep.category === "done") {
       setIsRunning(false);
       setTimerValue(0);
     }
