@@ -2,7 +2,7 @@ Timer app written in React Native, heavily inspired by Complex Timer.
 
 
 Session format
-==============
+--------------
 
 ```
 [{
@@ -58,3 +58,37 @@ Session format
     "session": ...
 }]
 ```
+
+
+
+App development environment
+-----------------------
+
+Dependencies:
+
+* Android Studio
+* node
+
+VSCode plugins:
+
+* Jest
+
+Ensure at least one Android emulator is set up in AVD Manager
+
+From the `app/` folder run
+
+> npx react-native start
+> npx react-native run-android
+
+
+Web development environment
+-----------------------
+
+Dependencies
+
+* leiningen
+
+From the root folder folder run
+
+> lein run
+> lein figwheel
