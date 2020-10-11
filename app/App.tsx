@@ -33,6 +33,9 @@ import Slider from '@react-native-community/slider';
 
 import Colors from './Colors.js';
 
+var Sound = require('react-native-sound');
+Sound.setCategory('Playback');
+
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -124,7 +127,8 @@ interface CountdownEntry {
   type: string,
   category: string,
   duration: number,
-  skip?: string
+  skip?: string,
+  countdownBell?: boolean,
 }
 
 export const getSessionDuration = (session: Entry[]) => {
@@ -346,10 +350,26 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
   callback(doneSessionEntry, count++, 0, 0, 0, 0);
 }
 
+var bell = new Sound('bell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
+  if (error) {
+    console.log('failed to load the bell', error);
+    return;
+  }
+  console.log('bell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
+});
+
+var preBell = new Sound('prebell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
+  if (error) {
+    console.log('failed to load the prebell', error);
+    return;
+  }
+  console.log('prebell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
+});
+
 const Play: React.FC = ({ route, navigation }) => {
   const { item } = route.params;
+  const session = item.session;
 
-  const [session, setSession] = useState(item.session);
   const [currentStepCount, setCurrentStepCount] = useState(0);
 
   const prevStep = getSessionEntry(session, currentStepCount - 1);
@@ -360,7 +380,7 @@ const Play: React.FC = ({ route, navigation }) => {
   const [timerValue, setTimerValue] = useState(currentStep!.duration);
   const [isRunning, setIsRunning] = useState(false);
 
-  const sessionEntryCount = getSessionEntryCount(item.session);
+  const sessionEntryCount = getSessionEntryCount(session);
 
   useEffect(() => {
     if (isRunning) {
@@ -379,8 +399,8 @@ const Play: React.FC = ({ route, navigation }) => {
   });
 
   useEffect(() => {
-    if (timerValue < 0) {
-      setTimerValue(nextStep!.duration);
+    if (timerValue < 0 && nextStep != null) {
+      setTimerValue(nextStep.duration);
       setCurrentStepCount(currentStepCount + 1);
     }
   });
@@ -424,6 +444,30 @@ const Play: React.FC = ({ route, navigation }) => {
     setIsRunning(false);
   }
 
+  useEffect(() => {
+    if (isRunning && timerValue === 0) {
+      bell.play((success: boolean) => {
+        if (success) {
+          console.log('successfully finished playing');
+        } else {
+          console.log('playback failed due to audio decoding errors');
+        }
+      });
+    }
+  });
+
+  useEffect(() => {
+    if (currentStep!.countdownBell && isRunning && (timerValue === 2 || timerValue === 1)) {
+      bell.play((success: boolean) => {
+        if (success) {
+          console.log('successfully finished playing');
+        } else {
+          console.log('playback failed due to audio decoding errors');
+        }
+      });
+    }
+  });
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -454,8 +498,9 @@ const Play: React.FC = ({ route, navigation }) => {
             step={1}
             value={timerValue}
             onValueChange={(value) => setTimerValue(value)}
-            minimumTrackTintColor="#FFFFFF"
-            maximumTrackTintColor="#000000"
+            minimumTrackTintColor={Colors.dark}
+            maximumTrackTintColor={Colors.white}
+            thumbTintColor={Colors.darkblue}
           />
           <Button
             color={Colors.darkblue}
@@ -482,8 +527,9 @@ const Play: React.FC = ({ route, navigation }) => {
               setCurrentStepCount(value);
               setTimerValue(-1);
             }}
-            minimumTrackTintColor="#FFFFFF"
-            maximumTrackTintColor="#000000"
+            minimumTrackTintColor={Colors.white}
+            maximumTrackTintColor={Colors.dark}
+            thumbTintColor={Colors.darkblue}
           />
           <Button
             color={Colors.darkblue}
