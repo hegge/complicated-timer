@@ -19,6 +19,7 @@ import {
   Text,
   TextInput,
   StatusBar,
+  ViewProps,
 } from 'react-native';
 
 import 'react-native-gesture-handler';
@@ -174,7 +175,6 @@ const SessionList: React.FC = () => {
             renderItem={renderSessionListItem}
             onRefresh={() => { fetchSessions() }}
             refreshing={isLoading}
-            scrollEnabled={false}
             ListFooterComponent={
               !isLoading &&
               <Button
@@ -485,14 +485,17 @@ const Play: React.FC = ({ route, navigation }) => {
   );
 };
 
-const UselessTextInput = (props) => {
-  const [value, setText] = useState(props.text);
+const ControlledTextInput = (props) => {
+  const setText = (text: string) => {
+    props.onChangeText(text);
+  }
 
   return (
     <TextInput
       style={props.style}
       onChangeText={text => setText(text)}
-      value={value}
+      value={props.text}
+      keyboardType={props.keyboardType}
       placeholder={props.laceholder}
     />
   );
@@ -594,6 +597,12 @@ const EditSession: React.FC = ({ route }) => {
   const { item } = route.params;
 
   const [session, setSession] = useState(item.session);
+  const [sessionName, setSessionName] = useState(item.name);
+  const [sessionDescription, setSessionDescription] = useState(item.description);
+
+  const addSessionContent = (element) => {
+    setSession([...session, element]);
+  }
 
   const renderSessionItem = ({ item }) => {
     if (item.type === "repeat") {
@@ -609,13 +618,27 @@ const EditSession: React.FC = ({ route }) => {
       <View style={styles.body}>
         <View style={styles.descriptiveTextInputContainer}>
           <Text>Session name:</Text>
-          <UselessTextInput style={styles.textInput} text={item.name} placeholder="Enter name" />
+          <ControlledTextInput
+            style={styles.textInput}
+            text={sessionName}
+            placeholder="Enter name"
+            onChangeText={(text: string) => setSessionName(text)}
+          />
         </View>
         <View style={styles.descriptiveTextInputContainer}>
           <Text>Session description:</Text>
-          <UselessTextInput style={styles.textInput} text={item.description} placeholder="Enter description" />
+          <ControlledTextInput
+            style={styles.textInput}
+            text={sessionDescription}
+            placeholder="Enter description"
+            onChangeText={(text: string) => setSessionDescription(text)}
+          />
         </View>
         <FlatList
+          style={{
+            flexDirection: "column",
+            flex: 1,
+          }}
           data={flattenSession(session)}
           keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
           renderItem={renderSessionItem}
@@ -623,14 +646,14 @@ const EditSession: React.FC = ({ route }) => {
         <Button
           color={Colors.darkblue}
           onPress={() => {
-            setSession([...session, emptyStep]);
+            addSessionContent(emptyStep);
           }}
           title="Add step"
         />
         <Button
           color={Colors.darkblue}
           onPress={() => {
-            setSession([...session, emptyRepeat]);
+            addSessionContent(emptyRepeat);
           }}
           title="Add repeat"
         />
@@ -642,21 +665,33 @@ const EditSession: React.FC = ({ route }) => {
 const EditRepeat: React.FC = ({ route }) => {
   const { item } = route.params;
 
+  const [repetitions, setRepetitions] = useState(item.repetitions);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
         <View style={styles.descriptiveTextInputContainer}>
           <Text>Number of repetitions:</Text>
-          <UselessTextInput style={styles.textInput} text={item.repetitions.toString()} placeholder="Enter repetitions" />
+          <ControlledTextInput
+            style={styles.textInput}
+            keyboardType="number-pad"
+            text={repetitions.toString()}
+            placeholder="Enter repetitions"
+            onChangeText={(text: number) => setRepetitions(text)}
+          />
         </View>
       </View>
     </>
   );
 };
 
-function RadioButton(props) {
-  console.log(props)
+interface RadioButtonProps {
+  style?: ViewProps,
+  selected: boolean
+}
+
+function RadioButton(props: RadioButtonProps) {
   return (
     <View style={[{
       height: 24,
@@ -684,18 +719,48 @@ function RadioButton(props) {
 const EditCountdown: React.FC = ({ route }) => {
   const { item } = route.params;
 
+  const [duration, setDuration] = useState(item.duration);
+  const [category, setCategory] = useState(item.category);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={styles.body}>
         <View style={styles.descriptiveTextInputContainer}>
           <Text>Duration:</Text>
-          <UselessTextInput style={styles.textInput} text={item.duration.toString()} placeholder="Enter duration" />
+          <ControlledTextInput
+            style={styles.textInput}
+            keyboardType="number-pad"
+            text={duration.toString()}
+            placeholder="Enter duration"
+            onChangeText={(text: number) => setDuration(text)}
+          />
         </View>
-        <View style={styles.descriptiveTextInputContainer}>
+        <View style={styles.descriptiveRatioButtonContainer}>
           <Text>Category:</Text>
-          <RadioButton selected={true}></RadioButton>
-          <Text>{item.category}</Text>
+          <View style={styles.ratioButtonContainer}>
+            <Pressable
+              style={styles.ratioButtonElement}
+              onPress={() => setCategory("work")}
+            >
+              <RadioButton selected={category === "work"}></RadioButton>
+              <Text>Work</Text>
+            </Pressable>
+            <Pressable
+              style={styles.ratioButtonElement}
+              onPress={() => { setCategory("pause") }}
+            >
+              <RadioButton selected={category === "pause"}></RadioButton>
+              <Text>Pause</Text>
+            </Pressable>
+            <Pressable
+              style={styles.ratioButtonElement}
+              onPress={() => setCategory("prepare")}
+            >
+              <RadioButton selected={category === "prepare"}></RadioButton>
+              <Text>Prepare</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </>
@@ -709,6 +774,7 @@ const styles = StyleSheet.create({
 
   body: {
     backgroundColor: Colors.white,
+    flex: 1
   },
   sessionContainer: {
     marginVertical: 16,
@@ -795,6 +861,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: 'center',
     padding: 8,
+  },
+  descriptiveRatioButtonContainer: {
+    padding: 8,
+  },
+  ratioButtonContainer: {
+    flexDirection: "column",
+  },
+  ratioButtonElement: {
+    flexDirection: "row",
+    alignContent: "center",
+    padding: 4,
   },
   highlight: {
     fontWeight: '700',
