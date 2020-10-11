@@ -14,17 +14,17 @@ import {
   FlatList,
   KeyboardTypeOptions,
   Pressable,
+  StatusBar,
   StyleSheet,
-  View,
   Text,
   TextInput,
-  StatusBar,
+  View,
   ViewProps,
   ViewStyle,
 } from 'react-native';
 
 import 'react-native-gesture-handler';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import UUIDGenerator from 'react-native-uuid-generator';
@@ -35,7 +35,7 @@ import Colors from './Colors.js';
 
 const Stack = createStackNavigator();
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -72,21 +72,17 @@ interface SessionListItemProps {
   description: string,
   duration: number,
   workDuration: number,
-  item: Session,
+  onPress: () => void,
 }
 
-const SessionListItem = (props: SessionListItemProps) => {
-  const navigation = useNavigation();
-
+const SessionListItem: React.FC<SessionListItemProps> = (props) => {
   return (
     <View style={styles.sessionContainer}>
       <Pressable
         style={{
           flexDirection: "row",
         }}
-        onPress={() => {
-          navigation.navigate('Play', { item: props.item, name: props.name })
-        }}>
+        onPress={props.onPress}>
         <View
           style={{
             flexDirection: "column",
@@ -144,7 +140,7 @@ export const getSessionDuration = (session: Entry[]) => {
   return { totalDuration, totalWorkDuration };
 }
 
-const SessionList: React.FC = () => {
+const SessionList: React.FC = ({ navigation }) => {
   const [isLoading, setLoading] = useState(true);
   const [data, setData] = useState([]);
 
@@ -167,7 +163,8 @@ const SessionList: React.FC = () => {
     return (
       <SessionListItem name={item.name} description={item.description}
         duration={totalDuration} workDuration={totalWorkDuration}
-        item={item} />
+        onPress={() => navigation.navigate('Play', { item: item })}
+      />
     );
   }
 
@@ -524,7 +521,7 @@ interface ControlledTextInputProps {
   onChangeText: (text: string) => void,
 }
 
-const ControlledTextInput = (props: ControlledTextInputProps) => {
+const ControlledTextInput: React.FC<ControlledTextInputProps> = (props) => {
   const setText = (text: string) => {
     props.onChangeText(text);
   }
@@ -558,11 +555,11 @@ interface NestedEntry {
 
 interface RepeatSessionItemProps {
   repetitions: number,
-  item: RepeatEntry & NestedEntry
+  item: RepeatEntry & NestedEntry,
+  onPress: () => void,
 }
 
-const RepeatSessionItem = (props: RepeatSessionItemProps) => {
-  const navigation = useNavigation();
+const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
   const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
@@ -575,9 +572,7 @@ const RepeatSessionItem = (props: RepeatSessionItemProps) => {
           padding: 10,
           justifyContent: "space-around",
         }]}
-      onPress={() => {
-        navigation.navigate('EditRepeat', { item: props.item })
-      }}>
+      onPress={props.onPress}>
       <Text>Repeat</Text>
       <Text>{props.repetitions}</Text>
     </Pressable>
@@ -587,11 +582,11 @@ const RepeatSessionItem = (props: RepeatSessionItemProps) => {
 interface CountdownSessionItemProps {
   category: string
   duration: number
-  item: CountdownEntry & NestedEntry
+  item: CountdownEntry & NestedEntry,
+  onPress: () => void,
 }
 
-const CountdownSessionItem = (props: CountdownSessionItemProps) => {
-  const navigation = useNavigation();
+const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
   const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
@@ -604,9 +599,7 @@ const CountdownSessionItem = (props: CountdownSessionItemProps) => {
           padding: 10,
           justifyContent: "space-around",
         }]}
-      onPress={() => {
-        navigation.navigate('EditCountdown', { item: props.item })
-      }}>
+      onPress={props.onPress}>
       <Text>{capitalize(props.category)}</Text>
       <Text>{formatDuration(props.duration)}</Text>
     </Pressable>
@@ -620,7 +613,7 @@ function extend(target: any, source: any): any {
   return target;
 }
 
-const flattenSession = (session: Entry[]) => {
+const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & NestedEntry)[] => {
   var flattened = [];
   for (var i = 0; i < session.length; i++) {
     var entry = session[i];
@@ -647,7 +640,7 @@ const flattenSession = (session: Entry[]) => {
   return flattened;
 }
 
-const EditSession: React.FC = ({ route }) => {
+const EditSession: React.FC = ({ route, navigation }) => {
   const { item } = route.params;
 
   const [session, setSession] = useState(item.session);
@@ -660,9 +653,13 @@ const EditSession: React.FC = ({ route }) => {
 
   const renderSessionItem = ({ item }: { item: Entry }) => {
     if (item.type === "repeat") {
-      return <RepeatSessionItem repetitions={item.repetitions} item={item} />;
+      let repeatItem = item as RepeatEntry & NestedEntry;
+      return <RepeatSessionItem repetitions={repeatItem.repetitions} item={repeatItem}
+        onPress={() => navigation.navigate('EditRepeat', { item: item })} />;
     } else {
-      return <CountdownSessionItem category={item.category} duration={item.duration} item={item} />
+      let countdownItem = item as CountdownEntry & NestedEntry;
+      return <CountdownSessionItem category={countdownItem.category} duration={countdownItem.duration} item={countdownItem}
+        onPress={() => navigation.navigate('EditCountdown', { item: item })} />
     }
   };
 
@@ -745,7 +742,7 @@ interface RadioButtonProps {
   selected: boolean
 }
 
-function RadioButton(props: RadioButtonProps) {
+const RadioButton: React.FC<RadioButtonProps> = (props) => {
   return (
     <View style={[{
       height: 24,
