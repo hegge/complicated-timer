@@ -105,6 +105,7 @@ export const getSessionDuration = (session) => {
     if (entry.category === "work") {
       totalWorkDuration += entry.duration;
     }
+    return false;
   });
   return { totalDuration, totalWorkDuration };
 }
@@ -232,7 +233,6 @@ export const getSessionProgress = (session, index: number) => {
       progress = (rep1 + 1) + "/" + total1 + " " + (rep2 + 1) + "/" + total2;
     }
     if (index === count) {
-      entryAtIndex = entry;
       return true;
     } else {
       return false;
@@ -240,6 +240,8 @@ export const getSessionProgress = (session, index: number) => {
   });
   return progress
 }
+
+type EntryCallback = (entry, count: number, rep1: number, total1: number, rep2: number, total2: number) => boolean
 
 export const getSessionEntry = (session, index: number) => {
   var entryAtIndex = null;
@@ -260,7 +262,7 @@ const isSkipped = (entry, parentEntry, repNumber: number) => {
     (entry.skip === 'last' && repNumber === (parentEntry.repetitions - 1)));
 }
 
-export const traverseSession = (session, callback) => {
+export const traverseSession = (session, callback: EntryCallback) => {
   var count = 0;
 
   for (var i = 0; i < session.length; i++) {
