@@ -12,14 +12,15 @@ import {
   ActivityIndicator,
   Button,
   FlatList,
+  KeyboardTypeOptions,
   Pressable,
   StyleSheet,
-  ScrollView,
   View,
   Text,
   TextInput,
   StatusBar,
   ViewProps,
+  ViewStyle,
 } from 'react-native';
 
 import 'react-native-gesture-handler';
@@ -66,7 +67,15 @@ const App = () => {
 
 export default App;
 
-const SessionListItem = ({ name, description, duration, workDuration, item }: { name: string, description: string, duration: number, workDuration: number }) => {
+interface SessionListItemProps {
+  name: string,
+  description: string,
+  duration: number,
+  workDuration: number,
+  item: Session,
+}
+
+const SessionListItem = (props: SessionListItemProps) => {
   const navigation = useNavigation();
 
   return (
@@ -76,15 +85,15 @@ const SessionListItem = ({ name, description, duration, workDuration, item }: { 
           flexDirection: "row",
         }}
         onPress={() => {
-          navigation.navigate('Play', { item: item, name: name })
+          navigation.navigate('Play', { item: props.item, name: props.name })
         }}>
         <View
           style={{
             flexDirection: "column",
             flex: 1,
           }}>
-          <Text style={styles.sessionName}>{name}</Text>
-          <Text style={styles.sessionDescription}>{description}</Text>
+          <Text style={styles.sessionName}>{props.name}</Text>
+          <Text style={styles.sessionDescription}>{props.description}</Text>
         </View>
         <View
           style={{
@@ -92,15 +101,37 @@ const SessionListItem = ({ name, description, duration, workDuration, item }: { 
             justifyContent: "flex-end",
             flex: 0,
           }}>
-          <Text style={styles.sessionDuration}>{formatDuration(duration)}</Text>
-          <Text style={styles.sessionWorkDuration}>{formatDuration(workDuration)}</Text>
+          <Text style={styles.sessionDuration}>{formatDuration(props.duration)}</Text>
+          <Text style={styles.sessionWorkDuration}>{formatDuration(props.workDuration)}</Text>
         </View>
       </Pressable>
     </View>
   )
 };
 
-export const getSessionDuration = (session) => {
+interface Session {
+  name: string,
+  description: string,
+  session: Entry[],
+  id?: string,
+}
+
+type Entry = RepeatEntry | CountdownEntry;
+
+interface RepeatEntry {
+  type: string,
+  repetitions: number,
+  group: Entry[],
+}
+
+interface CountdownEntry {
+  type: string,
+  category: string,
+  duration: number,
+  skip?: string
+}
+
+export const getSessionDuration = (session: Entry[]) => {
   var totalDuration = 0;
   var totalWorkDuration = 0;
   traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
@@ -130,7 +161,7 @@ const SessionList: React.FC = () => {
     fetchSessions();
   }, []);
 
-  const renderSessionListItem = ({ item }) => {
+  const renderSessionListItem = ({ item }: { item: Session }) => {
     const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
 
     return (
@@ -140,7 +171,7 @@ const SessionList: React.FC = () => {
     );
   }
 
-  const emptySession = ({ uuid }: { uuid: string }) => {
+  const emptySession = ({ uuid }: { uuid: string }): Session => {
     return (
       {
         id: uuid,
@@ -165,29 +196,28 @@ const SessionList: React.FC = () => {
           <ActivityIndicator size="large" color={Colors.darkblue} />
         </View>
         : (
-          <FlatList
+          <View
             style={{
               flexDirection: "column",
               flex: 1,
-            }}
-            data={data}
-            keyExtractor={({ id }, index) => id.toString()}
-            renderItem={renderSessionListItem}
-            onRefresh={() => { fetchSessions() }}
-            refreshing={isLoading}
-            ListFooterComponent={
-              !isLoading &&
-              <Button
-                color={Colors.darkblue}
-                onPress={() => {
-                  UUIDGenerator.getRandomUUID().then((uuid) => {
-                    setData([...data, emptySession({ uuid })]);
-                  });
-                }}
-                title="Create new session"
-              />
-            }
-          />
+            }}>
+            <FlatList
+              data={data}
+              keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
+              renderItem={renderSessionListItem}
+              onRefresh={() => { fetchSessions() }}
+              refreshing={isLoading}
+            />
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                UUIDGenerator.getRandomUUID().then((uuid) => {
+                  setData([...data, emptySession({ uuid })]);
+                });
+              }}
+              title="Create new session"
+            />
+          </View>
         )}
     </>
   );
@@ -219,12 +249,13 @@ const itemStyle = (category: string) => {
   }
 }
 
-const doneSessionEntry = {
+const doneSessionEntry: CountdownEntry = {
+  type: "countdown",
   category: "done",
-  duration: 0
+  duration: 0,
 }
 
-export const getSessionProgress = (session, index: number) => {
+export const getSessionProgress = (session: Entry[], index: number) => {
   var progress = "";
   traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
     if (total1 === 0) {
@@ -243,9 +274,9 @@ export const getSessionProgress = (session, index: number) => {
   return progress
 }
 
-type EntryCallback = (entry, count: number, rep1: number, total1: number, rep2: number, total2: number) => boolean
+type EntryCallback = (entry: CountdownEntry, count: number, rep1: number, total1: number, rep2: number, total2: number) => boolean
 
-export const getSessionEntry = (session, index: number) => {
+export const getSessionEntry = (session: Entry[], index: number): CountdownEntry | null => {
   var entryAtIndex = null;
   traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
     if (index === count) {
@@ -258,10 +289,10 @@ export const getSessionEntry = (session, index: number) => {
   return entryAtIndex;
 }
 
-export const getSessionEntryCount = (session) => {
+export const getSessionEntryCount = (session: Entry[]) => {
   var entryCount = 0;
   traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
-    if (entry.category === "done") {
+    if (entry.type === "done") {
       return true;
     } else {
       entryCount++;
@@ -271,13 +302,13 @@ export const getSessionEntryCount = (session) => {
   return entryCount;
 }
 
-const isSkipped = (entry, parentEntry, repNumber: number) => {
+const isSkipped = (entry: CountdownEntry, parentEntry: RepeatEntry, repNumber: number) => {
   return ('skip' in entry &&
     (entry.skip === 'first' && repNumber === 0) ||
     (entry.skip === 'last' && repNumber === (parentEntry.repetitions - 1)));
 }
 
-export const traverseSession = (session, callback: EntryCallback) => {
+export const traverseSession = (session: Entry[], callback: EntryCallback) => {
   var count = 0;
 
   for (var i = 0; i < session.length; i++) {
@@ -329,7 +360,7 @@ const Play: React.FC = ({ route, navigation }) => {
   const nextStep = getSessionEntry(session, currentStepCount + 1);
   const progress = getSessionProgress(session, currentStepCount);
 
-  const [timerValue, setTimerValue] = useState(currentStep.duration);
+  const [timerValue, setTimerValue] = useState(currentStep!.duration);
   const [isRunning, setIsRunning] = useState(false);
 
   const sessionEntryCount = getSessionEntryCount(item.session);
@@ -344,7 +375,7 @@ const Play: React.FC = ({ route, navigation }) => {
   });
 
   useEffect(() => {
-    if (isRunning && currentStep.category === "done") {
+    if (isRunning && currentStep!.category === "done") {
       setIsRunning(false);
       setTimerValue(0);
     }
@@ -352,7 +383,7 @@ const Play: React.FC = ({ route, navigation }) => {
 
   useEffect(() => {
     if (timerValue < 0) {
-      setTimerValue(nextStep.duration);
+      setTimerValue(nextStep!.duration);
       setCurrentStepCount(currentStepCount + 1);
     }
   });
@@ -369,7 +400,7 @@ const Play: React.FC = ({ route, navigation }) => {
 
   const onReverseClicked = () => {
     console.log("reverse clicked");
-    if (timerValue < currentStep.duration) {
+    if (timerValue < currentStep!.duration) {
       setTimerValue(timerValue + 1);
     }
   }
@@ -377,21 +408,21 @@ const Play: React.FC = ({ route, navigation }) => {
   const onBackClicked = () => {
     console.log("back clicked")
     if (isRunning) {
-      setTimerValue(currentStep.duration);
+      setTimerValue(currentStep!.duration);
     } else if (currentStepCount === 0) {
-      setTimerValue(currentStep.duration);
+      setTimerValue(currentStep!.duration);
     } else {
       setCurrentStepCount(currentStepCount - 1);
-      setTimerValue(prevStep.duration);
+      setTimerValue(prevStep!.duration);
     }
     setIsRunning(false);
   }
 
   const onNextClicked = () => {
     console.log("next clicked")
-    if (nextStep.category !== "done") {
+    if (nextStep!.category !== "done") {
       setCurrentStepCount(currentStepCount + 1);
-      setTimerValue(nextStep.duration);
+      setTimerValue(nextStep!.duration);
     }
     setIsRunning(false);
   }
@@ -399,10 +430,10 @@ const Play: React.FC = ({ route, navigation }) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <View style={[styles.currentStep, itemStyle(currentStep.category)]}>
+      <View style={[styles.currentStep, itemStyle(currentStep!.category)]}>
         <Text style={styles.stepProgress}>{progress}</Text>
-        <Text style={styles.stepName}>{capitalize(currentStep.category)}</Text>
-        <Text style={styles.timer}>{formatDuration(timerValue, compact = true)}</Text>
+        <Text style={styles.stepName}>{capitalize(currentStep!.category)}</Text>
+        <Text style={styles.timer}>{formatDuration(timerValue, true)}</Text>
         <Button
           color={Colors.darkblue}
           onPress={() => { onPlayPauseClicked() }}
@@ -422,7 +453,7 @@ const Play: React.FC = ({ route, navigation }) => {
             style={{ width: 200, height: 40 }}
             inverted={true}
             minimumValue={0}
-            maximumValue={currentStep.duration}
+            maximumValue={currentStep!.duration}
             step={1}
             value={timerValue}
             onValueChange={(value) => setTimerValue(value)}
@@ -464,12 +495,12 @@ const Play: React.FC = ({ route, navigation }) => {
         </View>
       </View>
 
-      {currentStep.category === "done" ||
-        <View style={[styles.nextStep, itemStyle(nextStep.category)]}>
+      {currentStep!.category === "done" ||
+        <View style={[styles.nextStep, itemStyle(nextStep!.category)]}>
           <Text style={styles.nextTitle}>Next</Text>
-          <Text style={styles.nextName}>{capitalize(nextStep.category)}</Text>
-          {nextStep.category === "done" ||
-            <Text style={styles.nextDuration}>{formatDuration(nextStep.duration)}</Text>
+          <Text style={styles.nextName}>{capitalize(nextStep!.category)}</Text>
+          {nextStep!.category === "done" ||
+            <Text style={styles.nextDuration}>{formatDuration(nextStep!.duration)}</Text>
           }
         </View>
       }
@@ -485,7 +516,15 @@ const Play: React.FC = ({ route, navigation }) => {
   );
 };
 
-const ControlledTextInput = (props) => {
+interface ControlledTextInputProps {
+  style?: ViewStyle,
+  text: string,
+  placeholder: string,
+  keyboardType?: KeyboardTypeOptions,
+  onChangeText: (text: string) => void,
+}
+
+const ControlledTextInput = (props: ControlledTextInputProps) => {
   const setText = (text: string) => {
     props.onChangeText(text);
   }
@@ -496,26 +535,35 @@ const ControlledTextInput = (props) => {
       onChangeText={text => setText(text)}
       value={props.text}
       keyboardType={props.keyboardType}
-      placeholder={props.laceholder}
+      placeholder={props.placeholder}
     />
   );
 }
 
-const emptyStep = {
+const emptyStep: CountdownEntry = {
   type: "countdown",
   category: "work",
   duration: 60
 }
 
-const emptyRepeat = {
+const emptyRepeat: RepeatEntry = {
   type: "repeat",
   repetitions: 4,
   group: []
 }
 
-const RepeatSessionItem = ({ repetitions, item }: { repetitions: number }) => {
+interface NestedEntry {
+  nested: number,
+}
+
+interface RepeatSessionItemProps {
+  repetitions: number,
+  item: RepeatEntry & NestedEntry
+}
+
+const RepeatSessionItem = (props: RepeatSessionItemProps) => {
   const navigation = useNavigation();
-  const indent = 'nested' in item ? item.nested * 24 : 0;
+  const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
     <Pressable
@@ -528,22 +576,28 @@ const RepeatSessionItem = ({ repetitions, item }: { repetitions: number }) => {
           justifyContent: "space-around",
         }]}
       onPress={() => {
-        navigation.navigate('EditRepeat', { item: item })
+        navigation.navigate('EditRepeat', { item: props.item })
       }}>
       <Text>Repeat</Text>
-      <Text>{repetitions}</Text>
+      <Text>{props.repetitions}</Text>
     </Pressable>
   </View>
 };
 
-const CountdownSessionItem = ({ category, duration, item }: { category: string, duration: number }) => {
+interface CountdownSessionItemProps {
+  category: string
+  duration: number
+  item: CountdownEntry & NestedEntry
+}
+
+const CountdownSessionItem = (props: CountdownSessionItemProps) => {
   const navigation = useNavigation();
-  const indent = 'nested' in item ? item.nested * 24 : 0;
+  const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
 
   return <View style={styles.editItemContainer}>
     <Pressable
       style={[
-        itemStyle(category),
+        itemStyle(props.category),
         {
           flexDirection: "row",
           marginStart: indent,
@@ -551,22 +605,22 @@ const CountdownSessionItem = ({ category, duration, item }: { category: string, 
           justifyContent: "space-around",
         }]}
       onPress={() => {
-        navigation.navigate('EditCountdown', { item: item })
+        navigation.navigate('EditCountdown', { item: props.item })
       }}>
-      <Text>{capitalize(category)}</Text>
-      <Text>{formatDuration(duration)}</Text>
+      <Text>{capitalize(props.category)}</Text>
+      <Text>{formatDuration(props.duration)}</Text>
     </Pressable>
   </View>
 };
 
-function extend(target, source) {
+function extend(target: any, source: any): any {
   for (var key in source) {
     target[key] = source[key];
   }
   return target;
 }
 
-const flattenSession = (session) => {
+const flattenSession = (session: Entry[]) => {
   var flattened = [];
   for (var i = 0; i < session.length; i++) {
     var entry = session[i];
@@ -600,11 +654,11 @@ const EditSession: React.FC = ({ route }) => {
   const [sessionName, setSessionName] = useState(item.name);
   const [sessionDescription, setSessionDescription] = useState(item.description);
 
-  const addSessionContent = (element) => {
-    setSession([...session, element]);
+  const addSessionContent = (entry: Entry) => {
+    setSession([...session, entry]);
   }
 
-  const renderSessionItem = ({ item }) => {
+  const renderSessionItem = ({ item }: { item: Entry }) => {
     if (item.type === "repeat") {
       return <RepeatSessionItem repetitions={item.repetitions} item={item} />;
     } else {
@@ -678,7 +732,7 @@ const EditRepeat: React.FC = ({ route }) => {
             keyboardType="number-pad"
             text={repetitions.toString()}
             placeholder="Enter repetitions"
-            onChangeText={(text: number) => setRepetitions(text)}
+            onChangeText={(text: string) => setRepetitions(text)}
           />
         </View>
       </View>
@@ -733,7 +787,7 @@ const EditCountdown: React.FC = ({ route }) => {
             keyboardType="number-pad"
             text={duration.toString()}
             placeholder="Enter duration"
-            onChangeText={(text: number) => setDuration(text)}
+            onChangeText={(text: string) => setDuration(text)}
           />
         </View>
         <View style={styles.descriptiveRatioButtonContainer}>
