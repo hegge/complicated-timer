@@ -27,6 +27,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import UUIDGenerator from 'react-native-uuid-generator';
 
+import Slider from '@react-native-community/slider';
+
 import Colors from './Colors.js';
 
 const Stack = createStackNavigator();
@@ -256,6 +258,19 @@ export const getSessionEntry = (session, index: number) => {
   return entryAtIndex;
 }
 
+export const getSessionEntryCount = (session) => {
+  var entryCount = 0;
+  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+    if (entry.category === "done") {
+      return true;
+    } else {
+      entryCount++;
+      return false;
+    }
+  });
+  return entryCount;
+}
+
 const isSkipped = (entry, parentEntry, repNumber: number) => {
   return ('skip' in entry &&
     (entry.skip === 'first' && repNumber === 0) ||
@@ -303,9 +318,8 @@ export const traverseSession = (session, callback: EntryCallback) => {
   callback(doneSessionEntry, count++, 0, 0, 0, 0);
 }
 
-const Play: React.FC  = ({ route, navigation }) => {
+const Play: React.FC = ({ route, navigation }) => {
   const { item } = route.params;
-
 
   const [session, setSession] = useState(item.session);
   const [currentStepCount, setCurrentStepCount] = useState(0);
@@ -317,6 +331,8 @@ const Play: React.FC  = ({ route, navigation }) => {
 
   const [timerValue, setTimerValue] = useState(currentStep.duration);
   const [isRunning, setIsRunning] = useState(false);
+
+  const sessionEntryCount = getSessionEntryCount(item.session);
 
   useEffect(() => {
     if (isRunning) {
@@ -335,15 +351,27 @@ const Play: React.FC  = ({ route, navigation }) => {
   });
 
   useEffect(() => {
-    if (isRunning && timerValue < 0) {
+    if (timerValue < 0) {
       setTimerValue(nextStep.duration);
       setCurrentStepCount(currentStepCount + 1);
     }
   });
 
   const onPlayPauseClicked = () => {
-    console.log("play/pause clicked")
+    console.log("play/pause clicked");
     setIsRunning(!isRunning);
+  }
+
+  const onForwardClicked = () => {
+    console.log("forward clicked");
+    setTimerValue(timerValue - 1);
+  }
+
+  const onReverseClicked = () => {
+    console.log("reverse clicked");
+    if (timerValue < currentStep.duration) {
+      setTimerValue(timerValue + 1);
+    }
   }
 
   const onBackClicked = () => {
@@ -380,18 +408,55 @@ const Play: React.FC  = ({ route, navigation }) => {
           onPress={() => { onPlayPauseClicked() }}
           title={isRunning ? "Pause" : "Start"}
         />
-        <View style={styles.stepProgressBar} />
         <View
           style={{
             flexDirection: "row",
-            paddingVertical: 12,
+            paddingVertical: 4,
+            justifyContent: 'space-between'
+          }}>
+          <Button
+            color={Colors.darkblue}
+            onPress={() => { onReverseClicked() }}
+            title="Reverse" />
+          <Slider
+            style={{ width: 200, height: 40 }}
+            inverted={true}
+            minimumValue={0}
+            maximumValue={currentStep.duration}
+            step={1}
+            value={timerValue}
+            onValueChange={(value) => setTimerValue(value)}
+            minimumTrackTintColor="#FFFFFF"
+            maximumTrackTintColor="#000000"
+          />
+          <Button
+            color={Colors.darkblue}
+            onPress={() => { onForwardClicked() }}
+            title="Forward" />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            paddingVertical: 4,
             justifyContent: 'space-between'
           }}>
           <Button
             color={Colors.darkblue}
             onPress={() => { onBackClicked() }}
             title="Back" />
-          <View style={styles.sessionProgressBar} />
+          <Slider
+            style={{ width: 200, height: 40 }}
+            minimumValue={0}
+            maximumValue={sessionEntryCount}
+            step={1}
+            value={currentStepCount}
+            onValueChange={(value) => {
+              setCurrentStepCount(value);
+              setTimerValue(-1);
+            }}
+            minimumTrackTintColor="#FFFFFF"
+            maximumTrackTintColor="#000000"
+          />
           <Button
             color={Colors.darkblue}
             onPress={() => { onNextClicked() }}
@@ -525,7 +590,7 @@ const flattenSession = (session) => {
   return flattened;
 }
 
-const EditSession: React.FC  = ({ route }) => {
+const EditSession: React.FC = ({ route }) => {
   const { item } = route.params;
 
   const [session, setSession] = useState(item.session);
@@ -574,7 +639,7 @@ const EditSession: React.FC  = ({ route }) => {
   );
 };
 
-const EditRepeat: React.FC  = ({ route }) => {
+const EditRepeat: React.FC = ({ route }) => {
   const { item } = route.params;
 
   return (
@@ -616,7 +681,7 @@ function RadioButton(props) {
   );
 }
 
-const EditCountdown: React.FC  = ({ route }) => {
+const EditCountdown: React.FC = ({ route }) => {
   const { item } = route.params;
 
   return (
@@ -671,12 +736,12 @@ const styles = StyleSheet.create({
   },
   stepName: {
     fontSize: 24,
-    paddingVertical: 8,
+    paddingVertical: 4,
     color: Colors.lighter,
   },
   stepProgress: {
     fontSize: 32,
-    paddingVertical: 8,
+    paddingVertical: 4,
     color: Colors.lighter,
   },
   timer: {
@@ -686,7 +751,7 @@ const styles = StyleSheet.create({
   currentStep: {
     fontSize: 12,
     alignItems: 'center',
-    flex: 4,
+    flex: 5,
   },
   nextStep: {
     alignItems: 'center',
