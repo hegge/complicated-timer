@@ -9,7 +9,7 @@ import App, {
   formatDuration,
   getSessionProgress,
   getSessionEntry
-} from '../App';
+} from '../utils';
 import 'react-native/jest/setup';
 
 // Note: test renderer must be required after react-native.
