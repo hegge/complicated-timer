@@ -3,7 +3,7 @@ import {
   StyleSheet,
 } from 'react-native';
 
-import Colors from './Colors.js';
+import Colors from './Colors';
 
 const SharedStyles = StyleSheet.create({
   work: {

@@ -14,6 +14,9 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+
 import Slider from '@react-native-community/slider';
 
 import {
@@ -24,8 +27,7 @@ import {
   getSessionEntryCount,
   itemStyle,
 } from '../utils';
-import Colors from '../Colors.js';
-import SharedStyles from '../SharedStyles'
+import Colors from '../Colors';
 
 var Sound = require('react-native-sound');
 Sound.setCategory('Playback');
@@ -46,9 +48,10 @@ var preBell = new Sound('prebell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
   console.log('prebell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
 });
 
-const Play: React.FC = ({ route, navigation }) => {
-  const { item } = route.params;
-  const session = item.session;
+const PlaySession: React.FC = (props) => {
+  const { route, navigation } = props;
+  const index = route.params.index;
+  const session = props.sessions[index].session;
 
   const [currentStepCount, setCurrentStepCount] = useState(0);
 
@@ -231,14 +234,24 @@ const Play: React.FC = ({ route, navigation }) => {
       <Button
         color={Colors.darkblue}
         onPress={() => {
-          navigation.navigate('EditSession', { item: item })
+          navigation.navigate('EditSession', { index })
         }}
         title="Edit"
       />
     </>
   );
 };
-export default Play;
+
+function mapStateToProps(state) {
+  return {
+    sessions: state.sessions.sessions,
+  };
+}
+function matchDispatchToProps(dispatch) {
+  return bindActionCreators({
+  }, dispatch)
+}
+export default connect(mapStateToProps, matchDispatchToProps)(PlaySession);
 
 export const styles = StyleSheet.create({
   body: {

@@ -14,6 +14,9 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+
 import {
   Session,
   Entry,
@@ -25,7 +28,7 @@ import {
   formatDuration,
   itemStyle,
 } from '../utils';
-import Colors from '../Colors.js';
+import Colors from '../Colors';
 import SharedStyles from '../SharedStyles';
 
 interface ControlledTextInputProps {
@@ -155,15 +158,20 @@ const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & Neste
   return flattened;
 }
 
-const EditSession: React.FC = ({ route, navigation }) => {
-  const { item } = route.params;
+const EditSession: React.FC = (props) => {
+  const { route, navigation } = props;
+  const index = route.params.index;
+  const item = props.sessions[index];
 
   const [session, setSession] = useState(item.session);
   const [sessionName, setSessionName] = useState(item.name);
   const [sessionDescription, setSessionDescription] = useState(item.description);
 
+  const flatList = React.useRef(null)
+
   const addSessionContent = (entry: Entry) => {
     setSession([...session, entry]);
+    flatList.current && flatList.current.scrollToEnd();
   }
 
   const renderSessionItem = ({ item }: { item: Entry }) => {
@@ -208,6 +216,7 @@ const EditSession: React.FC = ({ route, navigation }) => {
           data={flattenSession(session)}
           keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
           renderItem={renderSessionItem}
+          ref={flatList}
         />
         <Button
           color={Colors.darkblue}
@@ -227,7 +236,16 @@ const EditSession: React.FC = ({ route, navigation }) => {
     </>
   );
 };
-export default EditSession;
+function mapStateToProps(state) {
+  return {
+    sessions: state.sessions.sessions,
+  };
+}
+function matchDispatchToProps(dispatch) {
+  return bindActionCreators({
+  }, dispatch)
+}
+export default connect(mapStateToProps, matchDispatchToProps)(EditSession);
 
 export const EditRepeat: React.FC = ({ route }) => {
   const { item } = route.params;

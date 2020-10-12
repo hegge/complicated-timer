@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import {
   ActivityIndicator,
@@ -11,6 +11,11 @@ import {
   View,
 } from 'react-native';
 
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+
+import { setSessions, addSession, setLoading } from '../actions/actions';
+
 import UUIDGenerator from 'react-native-uuid-generator';
 
 import {
@@ -20,12 +25,7 @@ import {
   formatDuration,
   getSessionDuration,
 } from '../utils';
-import Colors from '../Colors.js';
-
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-
-import { setSessions, addSession, setLoading } from '../actions/actions';
+import Colors from '../Colors';
 
 interface SessionListItemProps {
   name: string,
@@ -81,16 +81,18 @@ const SessionList: React.FC = (props) => {
     fetchSessions();
   }, []);
 
-  const renderSessionListItem = ({ item }: { item: Session }) => {
+  const renderSessionListItem = ({ item, index }: { item: Session }) => {
     const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
 
     return (
       <SessionListItem name={item.name} description={item.description}
         duration={totalDuration} workDuration={totalWorkDuration}
-        onPress={() => navigation.navigate('PlaySession', { item: item })}
+        onPress={() => navigation.navigate('PlaySession', { index, name: item.name })}
       />
     );
   }
+
+  const flatList = React.useRef(null)
 
   const emptySession = ({ uuid }: { uuid: string }): Session => {
     return (
@@ -127,12 +129,14 @@ const SessionList: React.FC = (props) => {
               renderItem={renderSessionListItem}
               onRefresh={() => { fetchSessions() }}
               refreshing={props.isLoading}
+              ref={flatList}
             />
             <Button
               color={Colors.darkblue}
               onPress={() => {
                 UUIDGenerator.getRandomUUID().then((uuid) => {
                   props.addSession(emptySession({ uuid }));
+                  flatList.current && flatList.current.scrollToEnd();
                 });
               }}
               title="Create new session"
@@ -145,8 +149,8 @@ const SessionList: React.FC = (props) => {
 
 function mapStateToProps(state) {
   return {
-    sessions: state.sessionList.sessions,
-    isLoading: state.sessionList.isLoading,
+    sessions: state.sessions.sessions,
+    isLoading: state.sessions.isLoading,
   };
 }
 function matchDispatchToProps(dispatch) {
