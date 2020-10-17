@@ -14,7 +14,7 @@ import {
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
-import { setSessions, addSession, setLoading } from '../actions/actions';
+import { setSessions, addSession, setLoading } from '../actions/sessionActions';
 
 import UUIDGenerator from 'react-native-uuid-generator';
 
@@ -78,7 +78,9 @@ const SessionList: React.FC = (props) => {
   };
 
   useEffect(() => {
-    fetchSessions();
+    if (props.sessions.length == 0 && props.isLoading === false) {
+      fetchSessions();
+    }
   }, []);
 
   const renderSessionListItem = ({ item, index }: { item: Session }) => {

@@ -2,7 +2,7 @@ import { SET_SESSIONS, ADD_SESSION, SET_LOADING } from '../types'
 
 const initialState = {
   sessions: [],
-  isLoading: true,
+  isLoading: false,
 };
 
 export default function (state = initialState, action) {
