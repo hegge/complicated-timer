@@ -14,9 +14,21 @@ import {
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
-import { setSessions, addSession, setLoading } from '../actions/sessionActions';
+import {
+  setSessions,
+  addSession,
+  duplicateSession,
+  deleteSession,
+  setLoading,
+} from '../actions/sessionActions';
 
 import UUIDGenerator from 'react-native-uuid-generator';
+
+import {
+  Menu,
+  MenuItem,
+  Position,
+} from 'react-native-enhanced-popup-menu';
 
 import {
   Session,
@@ -28,21 +40,45 @@ import {
 import Colors from '../Colors';
 
 interface SessionListItemProps {
+  index: number,
   name: string,
   description: string,
   duration: number,
   workDuration: number,
   onPress: () => void,
+  duplicateSession: (index: number) => void,
+  deleteSession: (index: number) => void,
 }
 
 const SessionListItem: React.FC<SessionListItemProps> = (props) => {
+  let elementRef = React.createRef<View>();
+  let menuRef: Menu | null = null;
+
+  const setMenuRef: (instance: Menu | null) => void = (ref) => (menuRef = ref);
+  const hideMenu = () => menuRef?.hide();
+  const showMenu = () => {
+    menuRef?.show(elementRef.current, Position.BOTTOM_LEFT);
+  };
+
+  const duplicateSession = () => {
+    props.duplicateSession(props.index);
+    hideMenu();
+  }
+
+  const deleteSession = () => {
+    console.log("deleteSession")
+    props.deleteSession(props.index);
+    hideMenu();
+  }
+
   return (
-    <View style={styles.sessionContainer}>
+    <View style={styles.sessionContainer} ref={elementRef}>
       <Pressable
         style={{
           flexDirection: "row",
         }}
-        onPress={props.onPress}>
+        onPress={props.onPress}
+        onLongPress={showMenu}>
         <View
           style={{
             flexDirection: "column",
@@ -60,6 +96,19 @@ const SessionListItem: React.FC<SessionListItemProps> = (props) => {
           <Text style={styles.sessionDuration}>{formatDuration(props.duration)}</Text>
           <Text style={styles.sessionWorkDuration}>{formatDuration(props.workDuration)}</Text>
         </View>
+        <Menu ref={setMenuRef}>
+          <MenuItem onPress={duplicateSession}>Duplicate</MenuItem>
+          <MenuItem
+            textStyle={{
+              color: Colors.red,
+            }}
+            onPress={deleteSession}>
+            Delete
+              </MenuItem>
+          <MenuItem onPress={hideMenu} disabled>
+            Share
+          </MenuItem>
+        </Menu>
       </Pressable>
     </View>
   )
@@ -87,9 +136,15 @@ const SessionList: React.FC = (props) => {
     const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
 
     return (
-      <SessionListItem name={item.name} description={item.description}
-        duration={totalDuration} workDuration={totalWorkDuration}
+      <SessionListItem
+        index={index}
+        name={item.name}
+        description={item.description}
+        duration={totalDuration}
+        workDuration={totalWorkDuration}
         onPress={() => navigation.navigate('PlaySession', { index, name: item.name })}
+        duplicateSession={props.duplicateSession}
+        deleteSession={props.deleteSession}
       />
     );
   }
@@ -127,7 +182,7 @@ const SessionList: React.FC = (props) => {
             }}>
             <FlatList
               data={props.sessions}
-              keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
+              keyExtractor={(props, index) => index.toString()}
               renderItem={renderSessionListItem}
               onRefresh={() => { fetchSessions() }}
               refreshing={props.isLoading}
@@ -159,6 +214,8 @@ function matchDispatchToProps(dispatch) {
   return bindActionCreators({
     setSessions,
     addSession,
+    duplicateSession,
+    deleteSession,
     setLoading,
   }, dispatch)
 }
@@ -169,6 +226,8 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     paddingHorizontal: 24,
     width: "100%",
+    borderWidth: 1,
+    borderColor: Colors.lighter,
   },
   sessionName: {
     fontSize: 24,
