@@ -32,7 +32,6 @@
                                        :skip "last"
                                        }]
                               }]
-                   :id 1
                    }
                   {
                    :name "Sets :2'"
@@ -59,7 +58,6 @@
                                        :pause_when_complete true
                                        }]
                               }]
-                   :id 2
                    }
                   {
                    :name "2x3 x7\" :3'"
@@ -99,7 +97,6 @@
                                                ]
                                        }]
                               }]
-                   :id 3
                    }
                   {
                    :name "3x7 x7\" :3\"/3'"
@@ -137,7 +134,6 @@
                                                 }]
                                        }]
                               }]
-                   :id 4
                    }]]
     {:status 200
      :headers {"Content-Type" "application/json; charset=utf-8"}

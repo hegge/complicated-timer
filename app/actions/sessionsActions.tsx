@@ -8,7 +8,7 @@ import {
 
 import {
     Session,
-} from '../Session'
+} from '../session'
 
 export function setSessions(sessions: Session[]) {
     return {

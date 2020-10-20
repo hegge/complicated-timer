@@ -3,17 +3,21 @@ import {
   Entry,
   RepeatEntry,
   CountdownEntry,
-} from './Session'
+} from './session'
 
-import SharedStyles from './SharedStyles'
+import SharedStyles from './sharedStyles'
 
 export const capitalize = (str: string) => (
   str.charAt(0).toUpperCase() + str.slice(1)
 )
 
-export const formatDuration = (duration: number, compact = false) => {
+export const formatDuration = (duration: number, compact = false, precise = false) => {
   if (duration < 60 && compact) {
-    return new Date(duration * 1000).toISOString().substr(17, 2);
+    if (precise) {
+      return new Date(duration * 1000).toISOString().substr(17, 4);
+    } else {
+      return new Date(duration * 1000).toISOString().substr(17, 2);
+    }
   } else if (duration < 3600) {
     return new Date(duration * 1000).toISOString().substr(14, 5);
   } else {

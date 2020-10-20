@@ -35,7 +35,9 @@ const App: React.FC = () => {
             <Stack.Screen
               name="PlaySession"
               component={PlaySession}
-              options={({ route }) => ({ title: route.params.name })} />
+              options={({ navigation, route }) => ({
+                headerTitle: route.params.name,
+              })} />
             <Stack.Screen
               name="EditSession"
               component={EditSession}

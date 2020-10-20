@@ -22,14 +22,14 @@ import {
   Entry,
   RepeatEntry,
   CountdownEntry,
-} from '../Session'
+} from '../session'
 import {
   capitalize,
   formatDuration,
   itemStyle,
 } from '../utils';
-import Colors from '../Colors';
-import SharedStyles from '../SharedStyles';
+import Colors from '../colors';
+import SharedStyles from '../sharedStyles';
 
 interface ControlledTextInputProps {
   style?: ViewStyle,

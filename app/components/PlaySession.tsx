@@ -2,32 +2,51 @@ import React, { useEffect, useState } from 'react';
 
 import {
   Button,
-  FlatList,
-  KeyboardTypeOptions,
-  Pressable,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   View,
-  ViewProps,
-  ViewStyle,
 } from 'react-native';
 
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
+
+import {
+  setSession,
+  intervalTick,
+  playPressed,
+  pausePressed,
+  restartPressed,
+  reversePressed,
+  forwardPressed,
+  backPressed,
+  nextPressed,
+  stepSliderChanged,
+  sessionSliderChanged,
+} from '../actions/playActions';
+
+import {
+  getPrevStep,
+  getCurrentStep,
+  getNextStep,
+  getProgress,
+  getEntryCount,
+} from '../reducers/playReducer';
+
+import { RootState } from '../reducers/index';
+
+import { HeaderBackButton } from '@react-navigation/stack';
 
 import Slider from '@react-native-community/slider';
+
+import { MaterialDialog } from 'react-native-material-dialog';
 
 import {
   capitalize,
   formatDuration,
-  getSessionProgress,
-  getSessionEntry,
-  getSessionEntryCount,
   itemStyle,
 } from '../utils';
-import Colors from '../Colors';
+import Colors from '../colors';
 
 var Sound = require('react-native-sound');
 Sound.setCategory('Playback');
@@ -48,87 +67,29 @@ var preBell = new Sound('prebell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
   console.log('prebell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
 });
 
-const PlaySession: React.FC = (props) => {
+interface Props extends PropsFromRedux {
+}
+
+const PlaySession: React.FC<Props> = (props) => {
   const { route, navigation } = props;
+
   const index = route.params.index;
-  const session = props.sessions[index].session;
-
-  const [currentStepCount, setCurrentStepCount] = useState(0);
-
-  const prevStep = getSessionEntry(session, currentStepCount - 1);
-  const currentStep = getSessionEntry(session, currentStepCount);
-  const nextStep = getSessionEntry(session, currentStepCount + 1);
-  const progress = getSessionProgress(session, currentStepCount);
-
-  const [timerValue, setTimerValue] = useState(currentStep!.duration);
-  const [isRunning, setIsRunning] = useState(false);
-
-  const sessionEntryCount = getSessionEntryCount(session);
+  const session = props.sessions[index];
+  useEffect(() => {
+    props.setSession(session)
+  }, []);
 
   useEffect(() => {
-    if (isRunning) {
+    if (props.isRunning) {
       const interval = setInterval(() => {
-        setTimerValue(timerValue - 1);
-      }, 1000);
+        props.intervalTick();
+      }, 100);
       return () => clearInterval(interval);
     }
   });
 
   useEffect(() => {
-    if (isRunning && currentStep!.category === "done") {
-      setIsRunning(false);
-      setTimerValue(0);
-    }
-  });
-
-  useEffect(() => {
-    if (timerValue < 0 && nextStep != null) {
-      setTimerValue(nextStep.duration);
-      setCurrentStepCount(currentStepCount + 1);
-    }
-  });
-
-  const onPlayPauseClicked = () => {
-    console.log("play/pause clicked");
-    setIsRunning(!isRunning);
-  }
-
-  const onForwardClicked = () => {
-    console.log("forward clicked");
-    setTimerValue(timerValue - 1);
-  }
-
-  const onReverseClicked = () => {
-    console.log("reverse clicked");
-    if (timerValue < currentStep!.duration) {
-      setTimerValue(timerValue + 1);
-    }
-  }
-
-  const onBackClicked = () => {
-    console.log("back clicked")
-    if (isRunning) {
-      setTimerValue(currentStep!.duration);
-    } else if (currentStepCount === 0) {
-      setTimerValue(currentStep!.duration);
-    } else {
-      setCurrentStepCount(currentStepCount - 1);
-      setTimerValue(prevStep!.duration);
-    }
-    setIsRunning(false);
-  }
-
-  const onNextClicked = () => {
-    console.log("next clicked")
-    if (nextStep!.category !== "done") {
-      setCurrentStepCount(currentStepCount + 1);
-      setTimerValue(nextStep!.duration);
-    }
-    setIsRunning(false);
-  }
-
-  useEffect(() => {
-    if (isRunning && timerValue === 0) {
+    if (props.isRunning && props.timerValue === 0) {
       bell.play((success: boolean) => {
         if (success) {
           console.log('successfully finished playing');
@@ -140,7 +101,7 @@ const PlaySession: React.FC = (props) => {
   });
 
   useEffect(() => {
-    if (currentStep!.countdownBell && isRunning && (timerValue === 2 || timerValue === 1)) {
+    if (props.currentStep.countdownBell && props.isRunning && (props.timerValue === 2 || props.timerValue === 1)) {
       preBell.play((success: boolean) => {
         if (success) {
           console.log('successfully finished playing');
@@ -151,17 +112,65 @@ const PlaySession: React.FC = (props) => {
     }
   });
 
+  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
+
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View
+          style={{
+            paddingHorizontal: 8,
+          }}>
+        <Button
+          color={Colors.darkblue}
+          onPress={() => {
+            navigation.navigate('EditSession', { index })
+          }}
+          title="Edit"
+        />
+        </View>
+      ),
+      headerLeft: () => (
+        <HeaderBackButton onPress={() => {
+          if (props.isRunning) {
+            <MaterialDialog
+              title="Stop in-progress session?"
+              visible={cancelDialogVisible}
+              onOk={() => {
+                setCancelDialogVisible(false);
+                navigation.goBack();
+              }}
+              onCancel={() => setCancelDialogVisible(false)}>
+              <Text style={styles.dialogText}>Current progress will be lost.</Text>
+            </MaterialDialog>
+          } else {
+            navigation.goBack();
+          }
+        }} />
+      ),
+    });
+  }, [navigation]);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <View style={[styles.currentStep, itemStyle(currentStep!.category)]}>
-        <Text style={styles.stepProgress}>{progress}</Text>
-        <Text style={styles.stepName}>{capitalize(currentStep!.category)}</Text>
-        <Text style={styles.timer}>{formatDuration(timerValue, true)}</Text>
+      <View style={[styles.currentStep, itemStyle(props.currentStep!.category)]}>
+        <Text style={styles.stepProgress}>{props.progress}</Text>
+        <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
+        <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10))}</Text>
         <Button
           color={Colors.darkblue}
-          onPress={() => { onPlayPauseClicked() }}
-          title={isRunning ? "Pause" : "Start"}
+          onPress={() => {
+            if (props.currentStep!.category === "done") {
+              props.restartPressed();
+            } else if (props.isRunning) {
+              props.pausePressed();
+            } else {
+              props.playPressed();
+            }
+          }}
+          title={props.currentStep!.category === "done" ? "Restart" : props.isRunning ? "Pause" : "Start"}
         />
         <View
           style={{
@@ -171,23 +180,23 @@ const PlaySession: React.FC = (props) => {
           }}>
           <Button
             color={Colors.darkblue}
-            onPress={() => { onReverseClicked() }}
+            onPress={() => { props.reversePressed() }}
             title="Reverse" />
           <Slider
             style={{ width: 200, height: 40 }}
             inverted={true}
             minimumValue={0}
-            maximumValue={currentStep!.duration}
-            step={1}
-            value={timerValue}
-            onValueChange={(value) => setTimerValue(value)}
+            maximumValue={props.currentStep!.duration}
+            step={0.1}
+            value={props.timerValue}
+            onValueChange={(value) => props.stepSliderChanged(value)}
             minimumTrackTintColor={Colors.dark}
             maximumTrackTintColor={Colors.white}
             thumbTintColor={Colors.darkblue}
           />
           <Button
             color={Colors.darkblue}
-            onPress={() => { onForwardClicked() }}
+            onPress={() => { props.forwardPressed() }}
             title="Forward" />
         </View>
         <View
@@ -198,60 +207,70 @@ const PlaySession: React.FC = (props) => {
           }}>
           <Button
             color={Colors.darkblue}
-            onPress={() => { onBackClicked() }}
+            onPress={() => { props.backPressed() }}
             title="Back" />
           <Slider
             style={{ width: 200, height: 40 }}
             minimumValue={0}
-            maximumValue={sessionEntryCount}
+            maximumValue={props.sessionEntryCount - 1}
             step={1}
-            value={currentStepCount}
-            onValueChange={(value) => {
-              setCurrentStepCount(value);
-              setTimerValue(-1);
-            }}
+            value={props.currentStepCount}
+            onValueChange={(value) => { props.sessionSliderChanged(value); }}
             minimumTrackTintColor={Colors.white}
             maximumTrackTintColor={Colors.dark}
             thumbTintColor={Colors.darkblue}
           />
           <Button
             color={Colors.darkblue}
-            onPress={() => { onNextClicked() }}
+            onPress={() => { props.nextPressed() }}
             title="Next" />
         </View>
       </View>
 
-      {currentStep!.category === "done" ||
-        <View style={[styles.nextStep, itemStyle(nextStep!.category)]}>
+      {props.nextStep === null ||
+        <View style={[styles.nextStep, itemStyle(props.nextStep.category)]}>
           <Text style={styles.nextTitle}>Next</Text>
-          <Text style={styles.nextName}>{capitalize(nextStep!.category)}</Text>
-          {nextStep!.category === "done" ||
-            <Text style={styles.nextDuration}>{formatDuration(nextStep!.duration)}</Text>
+          <Text style={styles.nextName}>{capitalize(props.nextStep.category)}</Text>
+          {props.nextStep.category === "done" ||
+            <Text style={styles.nextDuration}>{formatDuration(props.nextStep.duration)}</Text>
           }
         </View>
       }
-
-      <Button
-        color={Colors.darkblue}
-        onPress={() => {
-          navigation.navigate('EditSession', { index })
-        }}
-        title="Edit"
-      />
     </>
   );
 };
 
-function mapStateToProps(state) {
-  return {
-    sessions: state.sessions.sessions,
-  };
-}
+const mapStateToProps = (state: RootState) => ({
+  sessions: state.sessions.sessions,
+  currentStepCount: state.play.currentStepCount,
+  timerValue: state.play.timerValue,
+  isRunning: state.play.isRunning,
+  progress: getProgress(state.play),
+  currentStep: getCurrentStep(state.play),
+  nextStep: getNextStep(state.play),
+  prevStep: getPrevStep(state.play),
+  sessionEntryCount: getEntryCount(state.play)
+})
+
 function matchDispatchToProps(dispatch) {
   return bindActionCreators({
+    setSession,
+    intervalTick,
+    playPressed,
+    pausePressed,
+    restartPressed,
+    reversePressed,
+    forwardPressed,
+    backPressed,
+    nextPressed,
+    stepSliderChanged,
+    sessionSliderChanged,
   }, dispatch)
 }
-export default connect(mapStateToProps, matchDispatchToProps)(PlaySession);
+
+const connector = connect(mapStateToProps, matchDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+export default connector(PlaySession)
 
 export const styles = StyleSheet.create({
   body: {

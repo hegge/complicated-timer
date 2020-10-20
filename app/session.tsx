@@ -20,3 +20,13 @@ export interface CountdownEntry {
   skip?: string,
   countdownBell?: boolean,
 }
+
+export const emptySession = (): Session => {
+  return (
+    {
+      name: "",
+      description: "",
+      session: []
+    }
+  );
+}

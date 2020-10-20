@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import {
   setSessions,
@@ -20,9 +20,7 @@ import {
   duplicateSession,
   deleteSession,
   setLoading,
-} from '../actions/sessionActions';
-
-import UUIDGenerator from 'react-native-uuid-generator';
+} from '../actions/sessionsActions';
 
 import {
   Menu,
@@ -31,13 +29,15 @@ import {
 } from 'react-native-enhanced-popup-menu';
 
 import {
+  emptySession,
   Session,
-} from '../Session'
+} from '../session'
 import {
   formatDuration,
   getSessionDuration,
 } from '../utils';
-import Colors from '../Colors';
+import Colors from '../colors';
+import { RootState } from '../reducers';
 
 interface SessionListItemProps {
   index: number,
@@ -114,7 +114,10 @@ const SessionListItem: React.FC<SessionListItemProps> = (props) => {
   )
 };
 
-const SessionList: React.FC = (props) => {
+interface Props extends PropsFromRedux {
+}
+
+const SessionList: React.FC<Props> = (props) => {
   const { navigation } = props;
 
   const fetchSessions = () => {
@@ -151,16 +154,25 @@ const SessionList: React.FC = (props) => {
 
   const flatList = React.useRef(null)
 
-  const emptySession = ({ uuid }: { uuid: string }): Session => {
-    return (
-      {
-        id: uuid,
-        name: "",
-        description: "",
-        session: []
-      }
-    );
-  }
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View
+          style={{
+            paddingHorizontal: 8,
+          }}>
+          <Button
+            color={Colors.darkblue}
+            onPress={() => {
+              props.addSession(emptySession());
+              flatList.current?.scrollToEnd();
+            }}
+            title="Create new"
+          />
+        </View>
+      ),
+    });
+  }, [navigation]);
 
   return (
     <>
@@ -188,23 +200,13 @@ const SessionList: React.FC = (props) => {
               refreshing={props.isLoading}
               ref={flatList}
             />
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                UUIDGenerator.getRandomUUID().then((uuid) => {
-                  props.addSession(emptySession({ uuid }));
-                  flatList.current && flatList.current.scrollToEnd();
-                });
-              }}
-              title="Create new session"
-            />
           </View>
         )}
     </>
   );
 };
 
-function mapStateToProps(state) {
+function mapStateToProps(state: RootState) {
   return {
     sessions: state.sessions.sessions,
     isLoading: state.sessions.isLoading,
@@ -219,7 +221,9 @@ function matchDispatchToProps(dispatch) {
     setLoading,
   }, dispatch)
 }
-export default connect(mapStateToProps, matchDispatchToProps)(SessionList);
+const connector = connect(mapStateToProps, matchDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+export default connector(SessionList)
 
 const styles = StyleSheet.create({
   sessionContainer: {

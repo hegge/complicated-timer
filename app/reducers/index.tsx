@@ -1,8 +1,15 @@
 import { combineReducers } from 'redux';
-import sessionsReducer from './sessionsReducer';
+import playReducer, { PlayState } from './playReducer';
+import sessionsReducer, { SessionsState } from './sessionsReducer';
+
+export interface RootState {
+  sessions: SessionsState,
+  play: PlayState
+}
 
 const rootReducer = combineReducers({
-    sessions: sessionsReducer,
+  sessions: sessionsReducer,
+  play: playReducer,
 });
 
 export default rootReducer;

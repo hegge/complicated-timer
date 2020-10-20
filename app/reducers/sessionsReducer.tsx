@@ -6,6 +6,15 @@ import {
   SET_LOADING,
 } from '../types'
 
+import {
+  Session,
+} from '../session'
+
+export interface SessionsState {
+  sessions: Session[],
+  isLoading: boolean,
+}
+
 const initialState = {
   sessions: [],
   isLoading: false,

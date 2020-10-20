@@ -8,7 +8,6 @@ Session format
 [{
     "name": "4x4 :3'",
     "description": "Fixed length intervals",
-    "id": "1",
     "session": [{
         "type": "repeat",
         "repetitions": 4,
@@ -48,13 +47,11 @@ Session format
 {
     "name": "3x7 x7" :3"/3'",
     "description": "Intermittent dead-hangs",
-    "id": unique_string,
     "session": ...
 },
 {
     "name": "2x3 x10" :3'",
     "description": "Max weight dead-hangs",
-    "id": unique_string,
     "session": ...
 }]
 ```
