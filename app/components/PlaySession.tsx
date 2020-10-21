@@ -26,11 +26,11 @@ import {
 } from '../actions/playActions';
 
 import {
-  getPrevStep,
-  getCurrentStep,
-  getNextStep,
-  getProgress,
-  getEntryCount,
+  currentStepSelector,
+  prevStepSelector,
+  nextStepSelector,
+  progressSelector,
+  entryCountSelector,
 } from '../reducers/playReducer';
 
 import { RootState } from '../reducers/index';
@@ -245,11 +245,11 @@ const mapStateToProps = (state: RootState) => ({
   currentStepCount: state.play.currentStepCount,
   timerValue: state.play.timerValue,
   isRunning: state.play.isRunning,
-  progress: getProgress(state.play),
-  currentStep: getCurrentStep(state.play),
-  nextStep: getNextStep(state.play),
-  prevStep: getPrevStep(state.play),
-  sessionEntryCount: getEntryCount(state.play)
+  progress: progressSelector(state.play),
+  currentStep: currentStepSelector(state.play),
+  nextStep: nextStepSelector(state.play),
+  prevStep: prevStepSelector(state.play),
+  sessionEntryCount: entryCountSelector(state.play)
 })
 
 function matchDispatchToProps(dispatch) {
