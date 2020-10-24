@@ -13,6 +13,10 @@ import {
 
 import { bindActionCreators } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+import { RootStackParamList } from '../App';
 
 import {
   setSessions,
@@ -115,6 +119,8 @@ const SessionListItem: React.FC<SessionListItemProps> = (props) => {
 };
 
 interface Props extends PropsFromRedux {
+  route: RouteProp<RootStackParamList, 'SessionList'>;
+  navigation: StackNavigationProp<RootStackParamList, 'SessionList'>;
 }
 
 const SessionList: React.FC<Props> = (props) => {
@@ -135,7 +141,7 @@ const SessionList: React.FC<Props> = (props) => {
     }
   }, []);
 
-  const renderSessionListItem = ({ item, index }: { item: Session }) => {
+  const renderSessionListItem = ({ item, index }: { item: Session, index: number }) => {
     const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
 
     return (
@@ -212,7 +218,7 @@ function mapStateToProps(state: RootState) {
     isLoading: state.sessions.isLoading,
   };
 }
-function matchDispatchToProps(dispatch) {
+function matchDispatchToProps(dispatch: any) {
   return bindActionCreators({
     setSessions,
     addSession,

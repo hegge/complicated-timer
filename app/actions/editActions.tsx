@@ -3,8 +3,12 @@ import {
   ADD_SESSION_ENTRY,
   SET_SESSION_NAME,
   SET_SESSION_DESCRIPTION,
+  SET_REPETITIONS,
+  SET_DURATION,
+  SET_CATEGORY,
   MOVE_UP,
   MOVE_DOWN,
+  DELETE,
 } from '../types'
 
 import {
@@ -40,16 +44,47 @@ export function setSessionDescription(description: string) {
   };
 }
 
-export function moveUpPressed(index: number) {
+export function setRepetitions(index: number, repetitions: number) {
+  return {
+    type: SET_REPETITIONS,
+    index: index,
+    repetitions: repetitions,
+  };
+}
+
+export function setDuration(index: number, duration: number) {
+  return {
+    type: SET_DURATION,
+    index: index,
+    duration: duration,
+  };
+}
+
+export function setCategory(index: number, category: string) {
+  return {
+    type: SET_CATEGORY,
+    index: index,
+    category: category,
+  };
+}
+
+export function moveEntryUp(index: number) {
   return {
     type: MOVE_UP,
     index: index,
   };
 }
 
-export function moveDownPressed(index: number) {
+export function moveEntryDown(index: number) {
   return {
     type: MOVE_DOWN,
+    index: index,
+  };
+}
+
+export function deleteEntry(index: number) {
+  return {
+    type: DELETE,
     index: index,
   };
 }

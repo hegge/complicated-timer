@@ -21,6 +21,7 @@ import {
   getSessionProgress,
   getSessionEntry,
   getSessionEntryCount,
+  doneSessionEntry,
 } from '../utils';
 
 import { createSelector } from 'reselect'
@@ -45,7 +46,10 @@ const currentStepCountSelector = (state: PlayState) => state.currentStepCount
 export const currentStepSelector = createSelector(
     sessionSelector,
     currentStepCountSelector,
-    (session, currentStepCount) => getSessionEntry(session, currentStepCount)
+    (session, currentStepCount) => {
+      let entry = getSessionEntry(session, currentStepCount);
+      return entry === null ? doneSessionEntry : entry;
+    }
 )
 export const prevStepSelector = createSelector(
   sessionSelector,

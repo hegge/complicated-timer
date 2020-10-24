@@ -3,41 +3,43 @@ import React, { useEffect, useState } from 'react';
 import {
   Button,
   FlatList,
-  KeyboardTypeOptions,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   View,
-  ViewProps,
-  ViewStyle,
 } from 'react-native';
 
 import { bindActionCreators } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+import { RootStackParamList } from '../App';
 
 import {
   setSession,
   addSessionEntry,
   setSessionName,
   setSessionDescription,
-  moveUpPressed,
-  moveDownPressed,
+  moveEntryUp,
+  moveEntryDown,
+  deleteEntry,
 } from '../actions/editActions';
 
 import {
-  sessionSelector,
+  flattenedSessionSelector,
   sessionNameSelector,
   sessionDescriptionSelector,
 } from '../reducers/editReducer';
 
 import {
-  Session,
   Entry,
   RepeatEntry,
   CountdownEntry,
 } from '../session'
+
+import ControlledTextInput from './ControlledTextInput';
 
 import { RootState } from '../reducers/index';
 
@@ -45,36 +47,13 @@ import {
   capitalize,
   formatDuration,
   itemStyle,
+  NestedEntry,
 } from '../utils';
 
 import { HeaderBackButton } from '@react-navigation/stack';
 
 import Colors from '../colors';
 import SharedStyles from '../sharedStyles';
-
-interface ControlledTextInputProps {
-  style?: ViewStyle,
-  text: string,
-  placeholder: string,
-  keyboardType?: KeyboardTypeOptions,
-  onChangeText: (text: string) => void,
-}
-
-const ControlledTextInput: React.FC<ControlledTextInputProps> = (props) => {
-  const setText = (text: string) => {
-    props.onChangeText(text);
-  }
-
-  return (
-    <TextInput
-      style={props.style}
-      onChangeText={text => setText(text)}
-      value={props.text}
-      keyboardType={props.keyboardType}
-      placeholder={props.placeholder}
-    />
-  );
-}
 
 const emptyStep: CountdownEntry = {
   type: "countdown",
@@ -86,10 +65,6 @@ const emptyRepeat: RepeatEntry = {
   type: "repeat",
   repetitions: 4,
   group: []
-}
-
-interface NestedEntry {
-  nested: number,
 }
 
 interface RepeatSessionItemProps {
@@ -149,41 +124,9 @@ const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
   </View>
 };
 
-function extend(target: any, source: any): any {
-  for (var key in source) {
-    target[key] = source[key];
-  }
-  return target;
-}
-
-const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & NestedEntry)[] => {
-  var flattened = [];
-  for (var i = 0; i < session.length; i++) {
-    var entry = session[i];
-    flattened.push(entry);
-
-    if ('group' in entry) {
-      for (var j = 0; j < entry.group.length; j++) {
-        var subEntry = entry.group[j];
-        flattened.push(extend(subEntry, { nested: 1 }));
-
-        if ('group' in subEntry) {
-          for (var k = 0; k < subEntry.group.length; k++) {
-            var subSubEntry = subEntry.group[k];
-            flattened.push(extend(subSubEntry, { nested: 2 }));
-
-            if (subSubEntry.type === "repeat") {
-              throw new Error("Deep nesting not supported");
-            }
-          }
-        }
-      }
-    }
-  }
-  return flattened;
-}
-
 interface Props extends PropsFromRedux {
+  route: RouteProp<RootStackParamList, 'EditSession'>;
+  navigation: StackNavigationProp<RootStackParamList, 'EditSession'>;
 }
 
 const EditSession: React.FC<Props> = (props) => {
@@ -202,16 +145,16 @@ const EditSession: React.FC<Props> = (props) => {
     flatList.current?.scrollToEnd();
   }
 
-  const renderSessionItem = ({ item, index }: { item: Entry }) => {
+  const renderSessionItem = ({ item, index }: { item: Entry, index: number }) => {
     if (item.type === "repeat") {
       let repeatItem = item as RepeatEntry & NestedEntry;
       return <RepeatSessionItem repetitions={repeatItem.repetitions} item={repeatItem}
-        onPress={() => navigation.navigate('EditRepeat', { item, index })}
+        onPress={() => navigation.navigate('EditRepeat', { index })}
         onLongPress={() => setSelectedEntry(index)} />;
     } else {
       let countdownItem = item as CountdownEntry & NestedEntry;
       return <CountdownSessionItem category={countdownItem.category} duration={countdownItem.duration} item={countdownItem}
-        onPress={() => navigation.navigate('EditCountdown', { item, index })}
+        onPress={() => navigation.navigate('EditCountdown', { index })}
         onLongPress={() => { console.log("longpress", index), setSelectedEntry(index) }} />
     }
   };
@@ -230,21 +173,21 @@ const EditSession: React.FC<Props> = (props) => {
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.moveUp(index)
+                props.moveEntryUp(index)
               }}
               title="Up"
             />
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.moveDown(index)
+                props.moveEntryDown(index)
               }}
               title="Down"
             />
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.delete(index)
+                props.deleteEntry(index)
               }}
               title="Delete"
             />
@@ -253,26 +196,29 @@ const EditSession: React.FC<Props> = (props) => {
         headerLeft: () => (
           <HeaderBackButton onPress={() => { setSelectedEntry(-1) }} />
         ),
-      } : {});
-  }, [navigation, setSelectedEntry]);
+      } : {
+        headerRight: undefined,
+        headerLeft: undefined
+      });
+  }, [navigation, selectedEntry]);
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <View style={SharedStyles.body}>
-        <View style={styles.descriptiveTextInputContainer}>
-          <Text>Session name:</Text>
+        <View style={SharedStyles.descriptiveTextInputContainer}>
+          <Text style={SharedStyles.descriptiveTextInputTitle}>Session name:</Text>
           <ControlledTextInput
-            style={styles.textInput}
+            style={SharedStyles.textInput}
             text={props.sessionName}
             placeholder="Enter name"
             onChangeText={(text: string) => props.setSessionName(text)}
           />
         </View>
-        <View style={styles.descriptiveTextInputContainer}>
-          <Text>Session description:</Text>
+        <View style={SharedStyles.descriptiveTextInputContainer}>
+          <Text style={SharedStyles.descriptiveTextInputTitle}>Session description:</Text>
           <ControlledTextInput
-            style={styles.textInput}
+            style={SharedStyles.textInput}
             text={props.sessionDescription}
             placeholder="Enter description"
             onChangeText={(text: string) => props.setSessionDescription(text)}
@@ -283,7 +229,7 @@ const EditSession: React.FC<Props> = (props) => {
             flexDirection: "column",
             flex: 1,
           }}
-          data={flattenSession(props.session)}
+          data={props.flattenedSession}
           keyExtractor={(props, index) => index.toString()}
           renderItem={renderSessionItem}
           ref={flatList}
@@ -309,155 +255,30 @@ const EditSession: React.FC<Props> = (props) => {
 function mapStateToProps(state: RootState) {
   return {
     sessions: state.sessions.sessions,
-    session: sessionSelector(state.edit),
+    flattenedSession: flattenedSessionSelector(state.edit),
     sessionName: sessionNameSelector(state.edit),
     sessionDescription: sessionDescriptionSelector(state.edit),
   };
 }
-function matchDispatchToProps(dispatch) {
+function matchDispatchToProps(dispatch: any) {
   return bindActionCreators({
     setSession,
     addSessionEntry,
     setSessionName,
     setSessionDescription,
+    moveEntryUp,
+    moveEntryDown,
+    deleteEntry,
   }, dispatch)
 }
 const connector = connect(mapStateToProps, matchDispatchToProps)
 type PropsFromRedux = ConnectedProps<typeof connector>
 export default connector(EditSession)
 
-export const EditRepeat: React.FC = (props) => {
-  const { route } = props;
-  const { item, index } = route.params;
-
-  const [repetitions, setRepetitions] = useState(item.repetitions);
-
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={SharedStyles.body}>
-        <View style={styles.descriptiveTextInputContainer}>
-          <Text>Number of repetitions:</Text>
-          <ControlledTextInput
-            style={styles.textInput}
-            keyboardType="number-pad"
-            text={repetitions.toString()}
-            placeholder="Enter repetitions"
-            onChangeText={(text: string) => setRepetitions(text)}
-          />
-        </View>
-      </View>
-    </>
-  );
-};
-
-interface RadioButtonProps {
-  style?: ViewProps,
-  selected: boolean
-}
-
-const RadioButton: React.FC<RadioButtonProps> = (props) => {
-  return (
-    <View style={[{
-      height: 24,
-      width: 24,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: '#000',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }, props.style]}>
-      {
-        props.selected ?
-          <View style={{
-            height: 12,
-            width: 12,
-            borderRadius: 6,
-            backgroundColor: '#000',
-          }} />
-          : null
-      }
-    </View>
-  );
-}
-
-export const EditCountdown: React.FC = (props) => {
-  const { route } = props;
-  const { item, index } = route.params;
-
-  const [duration, setDuration] = useState(item.duration);
-  const [category, setCategory] = useState(item.category);
-
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={SharedStyles.body}>
-        <View style={styles.descriptiveTextInputContainer}>
-          <Text>Duration:</Text>
-          <ControlledTextInput
-            style={styles.textInput}
-            keyboardType="number-pad"
-            text={duration.toString()}
-            placeholder="Enter duration"
-            onChangeText={(text: string) => setDuration(text)}
-          />
-        </View>
-        <View style={styles.descriptiveRatioButtonContainer}>
-          <Text>Category:</Text>
-          <View style={styles.ratioButtonContainer}>
-            <Pressable
-              style={styles.ratioButtonElement}
-              onPress={() => setCategory("work")}
-            >
-              <RadioButton selected={category === "work"}></RadioButton>
-              <Text>Work</Text>
-            </Pressable>
-            <Pressable
-              style={styles.ratioButtonElement}
-              onPress={() => { setCategory("pause") }}
-            >
-              <RadioButton selected={category === "pause"}></RadioButton>
-              <Text>Pause</Text>
-            </Pressable>
-            <Pressable
-              style={styles.ratioButtonElement}
-              onPress={() => setCategory("prepare")}
-            >
-              <RadioButton selected={category === "prepare"}></RadioButton>
-              <Text>Prepare</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </>
-  );
-};
-
 const styles = StyleSheet.create({
-  textInput: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-  },
   editItemContainer: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     width: "100%",
-  },
-  descriptiveTextInputContainer: {
-    flexDirection: "row",
-    alignItems: 'center',
-    padding: 8,
-  },
-  descriptiveRatioButtonContainer: {
-    padding: 8,
-  },
-  ratioButtonContainer: {
-    flexDirection: "column",
-  },
-  ratioButtonElement: {
-    flexDirection: "row",
-    alignContent: "center",
-    padding: 4,
   },
 });

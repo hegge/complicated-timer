@@ -19,7 +19,17 @@ import { store, persistor } from './store/store';
 
 import SessionList from './components/SessionList';
 import PlaySession from './components/PlaySession';
-import EditSession, { EditRepeat, EditCountdown } from './components/EditSession';
+import EditSession from './components/EditSession';
+import EditRepeat from './components/EditRepeat';
+import EditCountdown from './components/EditCountdown';
+
+export type RootStackParamList = {
+  SessionList: undefined;
+  PlaySession: { index: number, name: string };
+  EditSession: { index: number };
+  EditRepeat: { index: number };
+  EditCountdown: { index: number };
+};
 
 const App: React.FC = () => {
   return (
@@ -35,7 +45,7 @@ const App: React.FC = () => {
             <Stack.Screen
               name="PlaySession"
               component={PlaySession}
-              options={({ navigation, route }) => ({
+              options={({ route }) => ({
                 headerTitle: route.params.name,
               })} />
             <Stack.Screen

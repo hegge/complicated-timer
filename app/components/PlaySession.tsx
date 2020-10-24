@@ -10,6 +10,10 @@ import {
 
 import { bindActionCreators } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp, HeaderBackButton } from '@react-navigation/stack';
+
+import { RootStackParamList } from '../App';
 
 import {
   setSession,
@@ -35,8 +39,6 @@ import {
 
 import { RootState } from '../reducers/index';
 
-import { HeaderBackButton } from '@react-navigation/stack';
-
 import Slider from '@react-native-community/slider';
 
 import { MaterialDialog } from 'react-native-material-dialog';
@@ -51,9 +53,11 @@ import Colors from '../colors';
 import { maybePlaySound } from '../bell';
 
 interface Props extends PropsFromRedux {
+  route: RouteProp<RootStackParamList, 'PlaySession'>;
+  navigation: StackNavigationProp<RootStackParamList, 'PlaySession'>;
 }
 
-const tickLength = 1000; // ms
+const tickLength = 100; // ms
 
 const PlaySession: React.FC<Props> = (props) => {
   const { route, navigation } = props;
@@ -116,19 +120,19 @@ const PlaySession: React.FC<Props> = (props) => {
         }} />
       ),
     });
-  }, [navigation]);
+  }, [navigation, props.isRunning]);
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <View style={[styles.currentStep, itemStyle(props.currentStep!.category)]}>
+      <View style={[styles.currentStep, itemStyle(props.currentStep.category)]}>
         <Text style={styles.stepProgress}>{props.progress}</Text>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
         <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10 && tickLength < 1000))}</Text>
         <Button
           color={Colors.darkblue}
           onPress={() => {
-            if (props.currentStep!.category === "done") {
+            if (props.currentStep.category === "done") {
               props.restartPressed();
             } else if (props.isRunning) {
               props.pausePressed();
@@ -136,7 +140,7 @@ const PlaySession: React.FC<Props> = (props) => {
               props.playPressed();
             }
           }}
-          title={props.currentStep!.category === "done" ? "Restart" : props.isRunning ? "Pause" : "Start"}
+          title={props.currentStep.category === "done" ? "Restart" : props.isRunning ? "Pause" : "Start"}
         />
         <View
           style={{
@@ -152,7 +156,7 @@ const PlaySession: React.FC<Props> = (props) => {
             style={{ width: 200, height: 40 }}
             inverted={true}
             minimumValue={0}
-            maximumValue={props.currentStep!.duration}
+            maximumValue={props.currentStep.duration}
             step={tickLength / 1000}
             value={props.timerValue}
             onValueChange={(value) => props.stepSliderChanged(value)}
@@ -218,7 +222,7 @@ const mapStateToProps = (state: RootState) => ({
   sessionEntryCount: entryCountSelector(state.play)
 })
 
-function matchDispatchToProps(dispatch) {
+function matchDispatchToProps(dispatch: any) {
   return bindActionCreators({
     setSession,
     intervalTick,
@@ -277,5 +281,7 @@ export const styles = StyleSheet.create({
   nextDuration: {
     fontSize: 18,
     color: Colors.lighter,
+  },
+  dialogText: {
   },
 });

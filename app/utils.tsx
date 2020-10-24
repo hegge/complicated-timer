@@ -50,7 +50,7 @@ export const getSessionDuration = (session: Entry[]) => {
   return { totalDuration, totalWorkDuration };
 }
 
-const doneSessionEntry: CountdownEntry = {
+export const doneSessionEntry: CountdownEntry = {
   type: "countdown",
   category: "done",
   duration: 0,
@@ -148,4 +148,42 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
     }
   }
   callback(doneSessionEntry, count++, 0, 0, 0, 0);
+}
+
+function extend(target: any, source: any): any {
+  for (var key in source) {
+    target[key] = source[key];
+  }
+  return target;
+}
+
+export interface NestedEntry {
+  nested: number,
+}
+
+export const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & NestedEntry)[] => {
+  var flattened = [];
+  for (var i = 0; i < session.length; i++) {
+    var entry = session[i];
+    flattened.push(entry);
+
+    if ('group' in entry) {
+      for (var j = 0; j < entry.group.length; j++) {
+        var subEntry = entry.group[j];
+        flattened.push(extend(subEntry, { nested: 1 }));
+
+        if ('group' in subEntry) {
+          for (var k = 0; k < subEntry.group.length; k++) {
+            var subSubEntry = subEntry.group[k];
+            flattened.push(extend(subSubEntry, { nested: 2 }));
+
+            if (subSubEntry.type === "repeat") {
+              throw new Error("Deep nesting not supported");
+            }
+          }
+        }
+      }
+    }
+  }
+  return flattened;
 }

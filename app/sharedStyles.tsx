@@ -25,6 +25,19 @@ const SharedStyles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  textInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+  },
+  descriptiveTextInputContainer: {
+    flexDirection: "row",
+    alignItems: 'center',
+    padding: 8,
+  },
+  descriptiveTextInputTitle: {
+    paddingEnd: 4,
+  },
   footer: {
     color: Colors.dark,
     fontSize: 12,
