@@ -1,9 +1,11 @@
+// sessions
 export const SET_SESSIONS = 'SET_SESSIONS';
 export const ADD_SESSION = 'ADD_SESSION';
 export const DUPLICATE_SESSION = 'DUPLICATE_SESSION';
 export const DELETE_SESSION = 'DELETE_SESSION';
 export const SET_LOADING = 'SET_LOADING';
 
+// play
 export const SET_SESSION = 'SET_SESSION';
 export const INTERVAL_TICK = 'INTERVAL_TICK';
 export const PLAY_PRESSED = 'PLAY_PRESSED';
@@ -15,3 +17,10 @@ export const BACK_PRESSED = 'BACK_PRESSED';
 export const NEXT_PRESSED = 'NEXT_PRESSED';
 export const STEP_SLIDER_CHANGED = 'STEP_SLIDER_CHANGED';
 export const SESSION_SLIDER_CHANGED = 'SESSION_SLIDER_CHANGED';
+
+// edit
+export const ADD_SESSION_ENTRY = 'ADD_SESSION_ENTRY';
+export const SET_SESSION_NAME = 'SET_SESSION_NAME';
+export const SET_SESSION_DESCRIPTION = 'SET_SESSION_DESCRIPTION';
+export const MOVE_UP = 'MOVE_UP';
+export const MOVE_DOWN = 'MOVE_DOWN';

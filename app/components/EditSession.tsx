@@ -15,7 +15,22 @@ import {
 } from 'react-native';
 
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
+
+import {
+  setSession,
+  addSessionEntry,
+  setSessionName,
+  setSessionDescription,
+  moveUpPressed,
+  moveDownPressed,
+} from '../actions/editActions';
+
+import {
+  sessionSelector,
+  sessionNameSelector,
+  sessionDescriptionSelector,
+} from '../reducers/editReducer';
 
 import {
   Session,
@@ -23,11 +38,17 @@ import {
   RepeatEntry,
   CountdownEntry,
 } from '../session'
+
+import { RootState } from '../reducers/index';
+
 import {
   capitalize,
   formatDuration,
   itemStyle,
 } from '../utils';
+
+import { HeaderBackButton } from '@react-navigation/stack';
+
 import Colors from '../colors';
 import SharedStyles from '../sharedStyles';
 
@@ -75,6 +96,7 @@ interface RepeatSessionItemProps {
   repetitions: number,
   item: RepeatEntry & NestedEntry,
   onPress: () => void,
+  onLongPress: () => void,
 }
 
 const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
@@ -90,7 +112,8 @@ const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
           padding: 10,
           justifyContent: "space-around",
         }]}
-      onPress={props.onPress}>
+      onPress={props.onPress}
+      onLongPress={props.onLongPress}>
       <Text>Repeat</Text>
       <Text>{props.repetitions}</Text>
     </Pressable>
@@ -102,6 +125,7 @@ interface CountdownSessionItemProps {
   duration: number
   item: CountdownEntry & NestedEntry,
   onPress: () => void,
+  onLongPress: () => void,
 }
 
 const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
@@ -117,7 +141,8 @@ const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
           padding: 10,
           justifyContent: "space-around",
         }]}
-      onPress={props.onPress}>
+      onPress={props.onPress}
+      onLongPress={props.onLongPress}>
       <Text>{capitalize(props.category)}</Text>
       <Text>{formatDuration(props.duration)}</Text>
     </Pressable>
@@ -158,33 +183,78 @@ const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & Neste
   return flattened;
 }
 
-const EditSession: React.FC = (props) => {
-  const { route, navigation } = props;
-  const index = route.params.index;
-  const item = props.sessions[index];
+interface Props extends PropsFromRedux {
+}
 
-  const [session, setSession] = useState(item.session);
-  const [sessionName, setSessionName] = useState(item.name);
-  const [sessionDescription, setSessionDescription] = useState(item.description);
+const EditSession: React.FC<Props> = (props) => {
+  const { route, navigation } = props;
+
+  const index = route.params.index;
+  const session = props.sessions[index];
+  useEffect(() => {
+    props.setSession(session)
+  }, []);
 
   const flatList = React.useRef(null)
 
-  const addSessionContent = (entry: Entry) => {
-    setSession([...session, entry]);
-    flatList.current && flatList.current.scrollToEnd();
+  const addSessionEntry = (entry: Entry) => {
+    props.addSessionEntry(entry);
+    flatList.current?.scrollToEnd();
   }
 
-  const renderSessionItem = ({ item }: { item: Entry }) => {
+  const renderSessionItem = ({ item, index }: { item: Entry }) => {
     if (item.type === "repeat") {
       let repeatItem = item as RepeatEntry & NestedEntry;
       return <RepeatSessionItem repetitions={repeatItem.repetitions} item={repeatItem}
-        onPress={() => navigation.navigate('EditRepeat', { item: item })} />;
+        onPress={() => navigation.navigate('EditRepeat', { item, index })}
+        onLongPress={() => setSelectedEntry(index)} />;
     } else {
       let countdownItem = item as CountdownEntry & NestedEntry;
       return <CountdownSessionItem category={countdownItem.category} duration={countdownItem.duration} item={countdownItem}
-        onPress={() => navigation.navigate('EditCountdown', { item: item })} />
+        onPress={() => navigation.navigate('EditCountdown', { item, index })}
+        onLongPress={() => { console.log("longpress", index), setSelectedEntry(index) }} />
     }
   };
+
+  const [selectedEntry, setSelectedEntry] = useState(-1);
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions(
+      (selectedEntry >= 0) ? {
+        headerRight: () => (
+          <View
+            style={{
+              paddingHorizontal: 8,
+              flexDirection: "row"
+            }}>
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                props.moveUp(index)
+              }}
+              title="Up"
+            />
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                props.moveDown(index)
+              }}
+              title="Down"
+            />
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                props.delete(index)
+              }}
+              title="Delete"
+            />
+          </View>
+        ),
+        headerLeft: () => (
+          <HeaderBackButton onPress={() => { setSelectedEntry(-1) }} />
+        ),
+      } : {});
+  }, [navigation, setSelectedEntry]);
 
   return (
     <>
@@ -194,18 +264,18 @@ const EditSession: React.FC = (props) => {
           <Text>Session name:</Text>
           <ControlledTextInput
             style={styles.textInput}
-            text={sessionName}
+            text={props.sessionName}
             placeholder="Enter name"
-            onChangeText={(text: string) => setSessionName(text)}
+            onChangeText={(text: string) => props.setSessionName(text)}
           />
         </View>
         <View style={styles.descriptiveTextInputContainer}>
           <Text>Session description:</Text>
           <ControlledTextInput
             style={styles.textInput}
-            text={sessionDescription}
+            text={props.sessionDescription}
             placeholder="Enter description"
-            onChangeText={(text: string) => setSessionDescription(text)}
+            onChangeText={(text: string) => props.setSessionDescription(text)}
           />
         </View>
         <FlatList
@@ -213,22 +283,22 @@ const EditSession: React.FC = (props) => {
             flexDirection: "column",
             flex: 1,
           }}
-          data={flattenSession(session)}
-          keyExtractor={({ id }, index) => id == null ? index.toString() : id.toString()}
+          data={flattenSession(props.session)}
+          keyExtractor={(props, index) => index.toString()}
           renderItem={renderSessionItem}
           ref={flatList}
         />
         <Button
           color={Colors.darkblue}
           onPress={() => {
-            addSessionContent(emptyStep);
+            addSessionEntry(emptyStep);
           }}
           title="Add step"
         />
         <Button
           color={Colors.darkblue}
           onPress={() => {
-            addSessionContent(emptyRepeat);
+            addSessionEntry(emptyRepeat);
           }}
           title="Add repeat"
         />
@@ -236,19 +306,29 @@ const EditSession: React.FC = (props) => {
     </>
   );
 };
-function mapStateToProps(state) {
+function mapStateToProps(state: RootState) {
   return {
     sessions: state.sessions.sessions,
+    session: sessionSelector(state.edit),
+    sessionName: sessionNameSelector(state.edit),
+    sessionDescription: sessionDescriptionSelector(state.edit),
   };
 }
 function matchDispatchToProps(dispatch) {
   return bindActionCreators({
+    setSession,
+    addSessionEntry,
+    setSessionName,
+    setSessionDescription,
   }, dispatch)
 }
-export default connect(mapStateToProps, matchDispatchToProps)(EditSession);
+const connector = connect(mapStateToProps, matchDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+export default connector(EditSession)
 
-export const EditRepeat: React.FC = ({ route }) => {
-  const { item } = route.params;
+export const EditRepeat: React.FC = (props) => {
+  const { route } = props;
+  const { item, index } = route.params;
 
   const [repetitions, setRepetitions] = useState(item.repetitions);
 
@@ -301,8 +381,9 @@ const RadioButton: React.FC<RadioButtonProps> = (props) => {
   );
 }
 
-export const EditCountdown: React.FC = ({ route }) => {
-  const { item } = route.params;
+export const EditCountdown: React.FC = (props) => {
+  const { route } = props;
+  const { item, index } = route.params;
 
   const [duration, setDuration] = useState(item.duration);
   const [category, setCategory] = useState(item.category);
