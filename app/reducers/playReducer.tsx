@@ -95,7 +95,7 @@ export default function (state = initialState, action: any) {
         })
       } else {
         return Object.assign({}, state, {
-          timerValue: state.timerValue - 0.1
+          timerValue: state.timerValue - (action.tickLength / 1000)
         })
       }
     }

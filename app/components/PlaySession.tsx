@@ -48,27 +48,12 @@ import {
 } from '../utils';
 import Colors from '../colors';
 
-var Sound = require('react-native-sound');
-Sound.setCategory('Playback');
-
-var bell = new Sound('bell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
-  if (error) {
-    console.log('failed to load the bell', error);
-    return;
-  }
-  console.log('bell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
-});
-
-var preBell = new Sound('prebell.mp3', Sound.MAIN_BUNDLE, (error: any) => {
-  if (error) {
-    console.log('failed to load the prebell', error);
-    return;
-  }
-  console.log('prebell: duration in seconds: ' + bell.getDuration() + 'number of channels: ' + bell.getNumberOfChannels());
-});
+import { maybePlaySound } from '../bell';
 
 interface Props extends PropsFromRedux {
 }
+
+const tickLength = 1000; // ms
 
 const PlaySession: React.FC<Props> = (props) => {
   const { route, navigation } = props;
@@ -82,38 +67,19 @@ const PlaySession: React.FC<Props> = (props) => {
   useEffect(() => {
     if (props.isRunning) {
       const interval = setInterval(() => {
-        props.intervalTick();
-      }, 100);
+        props.intervalTick(tickLength);
+      }, tickLength);
       return () => clearInterval(interval);
     }
   });
 
   useEffect(() => {
-    if (props.isRunning && props.timerValue === 0) {
-      bell.play((success: boolean) => {
-        if (success) {
-          console.log('successfully finished playing');
-        } else {
-          console.log('playback failed due to audio decoding errors');
-        }
-      });
-    }
-  });
-
-  useEffect(() => {
-    if (props.currentStep.countdownBell && props.isRunning && (props.timerValue === 2 || props.timerValue === 1)) {
-      preBell.play((success: boolean) => {
-        if (success) {
-          console.log('successfully finished playing');
-        } else {
-          console.log('playback failed due to audio decoding errors');
-        }
-      });
+    if (props.isRunning && props.currentStep !== null && props.nextStep !== null) {
+      maybePlaySound(props.timerValue, props.currentStep, props.nextStep);
     }
   });
 
   const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
-
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -158,7 +124,7 @@ const PlaySession: React.FC<Props> = (props) => {
       <View style={[styles.currentStep, itemStyle(props.currentStep!.category)]}>
         <Text style={styles.stepProgress}>{props.progress}</Text>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
-        <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10))}</Text>
+        <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10 && tickLength < 1000))}</Text>
         <Button
           color={Colors.darkblue}
           onPress={() => {
@@ -187,7 +153,7 @@ const PlaySession: React.FC<Props> = (props) => {
             inverted={true}
             minimumValue={0}
             maximumValue={props.currentStep!.duration}
-            step={0.1}
+            step={tickLength / 1000}
             value={props.timerValue}
             onValueChange={(value) => props.stepSliderChanged(value)}
             minimumTrackTintColor={Colors.dark}

@@ -23,9 +23,10 @@ export function setSession(session: Session) {
   };
 }
 
-export function intervalTick() {
+export function intervalTick(tickLength: number) {
   return {
     type: INTERVAL_TICK,
+    tickLength: tickLength,
   };
 }
 
