@@ -233,11 +233,13 @@ export default connector(SessionList)
 
 const styles = StyleSheet.create({
   sessionContainer: {
-    marginVertical: 16,
-    paddingHorizontal: 24,
-    width: "100%",
+    marginVertical: 8,
+    marginHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.lighter,
+    borderColor: Colors.light,
   },
   sessionName: {
     fontSize: 24,
