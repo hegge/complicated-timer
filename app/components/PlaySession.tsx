@@ -50,7 +50,27 @@ import {
 } from '../utils';
 import Colors from '../colors';
 
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { maybePlaySound } from '../bell';
+
+interface IconButtonProps {
+  name: string,
+  onPress: () => void,
+}
+
+const IconButton: React.FC<IconButtonProps> = ({ name, onPress }) => {
+  return (<Icon.Button
+    iconStyle={{
+      marginRight: 0,
+    }}
+    color={Colors.light}
+    backgroundColor={Colors.darkblue}
+    size={32}
+    onPress={() => { onPress() }}
+    name={name}
+  />);
+}
 
 interface Props extends PropsFromRedux {
   route: RouteProp<RootStackParamList, 'PlaySession'>;
@@ -92,13 +112,17 @@ const PlaySession: React.FC<Props> = (props) => {
           style={{
             paddingHorizontal: 8,
           }}>
-        <Button
-          color={Colors.darkblue}
-          onPress={() => {
-            navigation.navigate('EditSession', { index })
-          }}
-          title="Edit"
-        />
+          <Icon.Button
+            iconStyle={{
+              marginRight: 0,
+            }}
+            color={Colors.light}
+            backgroundColor={Colors.darkblue}
+            onPress={() => {
+              navigation.navigate('EditSession', { index })
+            }}
+            name="edit"
+          />
         </View>
       ),
       headerLeft: () => (
@@ -129,8 +153,8 @@ const PlaySession: React.FC<Props> = (props) => {
         <Text style={styles.stepProgress}>{props.progress}</Text>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
         <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10 && tickLength < 1000))}</Text>
-        <Button
-          color={Colors.darkblue}
+        <IconButton
+          name={props.currentStep.category === "done" ? "refresh" : props.isRunning ? "pause" : "play-arrow"}
           onPress={() => {
             if (props.currentStep.category === "done") {
               props.restartPressed();
@@ -140,7 +164,6 @@ const PlaySession: React.FC<Props> = (props) => {
               props.playPressed();
             }
           }}
-          title={props.currentStep.category === "done" ? "Restart" : props.isRunning ? "Pause" : "Start"}
         />
         <View
           style={{
@@ -148,10 +171,10 @@ const PlaySession: React.FC<Props> = (props) => {
             paddingVertical: 4,
             justifyContent: 'space-between'
           }}>
-          <Button
-            color={Colors.darkblue}
+          <IconButton
+            name="fast-rewind"
             onPress={() => { props.reversePressed() }}
-            title="Reverse" />
+          />
           <Slider
             style={{ width: 200, height: 40 }}
             inverted={true}
@@ -164,10 +187,10 @@ const PlaySession: React.FC<Props> = (props) => {
             maximumTrackTintColor={Colors.white}
             thumbTintColor={Colors.darkblue}
           />
-          <Button
-            color={Colors.darkblue}
+          <IconButton
+            name="fast-forward"
             onPress={() => { props.forwardPressed() }}
-            title="Forward" />
+          />
         </View>
         <View
           style={{
@@ -175,10 +198,10 @@ const PlaySession: React.FC<Props> = (props) => {
             paddingVertical: 4,
             justifyContent: 'space-between'
           }}>
-          <Button
-            color={Colors.darkblue}
+          <IconButton
+            name="skip-previous"
             onPress={() => { props.backPressed() }}
-            title="Back" />
+          />
           <Slider
             style={{ width: 200, height: 40 }}
             minimumValue={0}
@@ -190,10 +213,10 @@ const PlaySession: React.FC<Props> = (props) => {
             maximumTrackTintColor={Colors.dark}
             thumbTintColor={Colors.darkblue}
           />
-          <Button
-            color={Colors.darkblue}
+          <IconButton
+            name="skip-next"
             onPress={() => { props.nextPressed() }}
-            title="Next" />
+          />
         </View>
       </View>
 
