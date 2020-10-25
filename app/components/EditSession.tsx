@@ -58,13 +58,13 @@ import SharedStyles from '../sharedStyles';
 const emptyStep: CountdownEntry = {
   type: "countdown",
   category: "work",
-  duration: 60
+  duration: 60,
 }
 
 const emptyRepeat: RepeatEntry = {
   type: "repeat",
   repetitions: 4,
-  group: []
+  group: [],
 }
 
 interface RepeatSessionItemProps {
@@ -72,6 +72,7 @@ interface RepeatSessionItemProps {
   item: RepeatEntry & NestedEntry,
   onPress: () => void,
   onLongPress: () => void,
+  selected: boolean,
 }
 
 const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
@@ -80,7 +81,7 @@ const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
   return <View style={styles.editItemContainer}>
     <Pressable
       style={[
-        SharedStyles.repeat,
+        props.selected ? SharedStyles.selected : SharedStyles.repeat,
         {
           flexDirection: "row",
           marginStart: indent,
@@ -101,6 +102,7 @@ interface CountdownSessionItemProps {
   item: CountdownEntry & NestedEntry,
   onPress: () => void,
   onLongPress: () => void,
+  selected: boolean,
 }
 
 const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
@@ -109,7 +111,7 @@ const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
   return <View style={styles.editItemContainer}>
     <Pressable
       style={[
-        itemStyle(props.category),
+        props.selected ? SharedStyles.selected : itemStyle(props.category),
         {
           flexDirection: "row",
           marginStart: indent,
@@ -150,12 +152,14 @@ const EditSession: React.FC<Props> = (props) => {
       let repeatItem = item as RepeatEntry & NestedEntry;
       return <RepeatSessionItem repetitions={repeatItem.repetitions} item={repeatItem}
         onPress={() => navigation.navigate('EditRepeat', { index })}
-        onLongPress={() => setSelectedEntry(index)} />;
+        onLongPress={() => setSelectedEntry(index)}
+        selected={selectedEntry === index} />;
     } else {
       let countdownItem = item as CountdownEntry & NestedEntry;
       return <CountdownSessionItem category={countdownItem.category} duration={countdownItem.duration} item={countdownItem}
         onPress={() => navigation.navigate('EditCountdown', { index })}
-        onLongPress={() => { console.log("longpress", index), setSelectedEntry(index) }} />
+        onLongPress={() => { console.log("longpress", index), setSelectedEntry(index) }}
+        selected={selectedEntry === index} />
     }
   };
 

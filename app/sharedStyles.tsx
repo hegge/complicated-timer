@@ -18,6 +18,9 @@ const SharedStyles = StyleSheet.create({
   repeat: {
     backgroundColor: Colors.yellow,
   },
+  selected: {
+    backgroundColor: Colors.darkblue,
+  },
   body: {
     backgroundColor: Colors.white,
     flex: 1
