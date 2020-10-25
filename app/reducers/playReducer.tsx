@@ -80,6 +80,7 @@ export default function (state = initialState, action: any) {
       const currentStep = getSessionEntry(action.session.entries, 0);
       return Object.assign({}, state, {
         session: action.session,
+        currentStepCount: 0,
         timerValue: currentStep?.duration,
         isRunning: false,
       })
@@ -88,15 +89,15 @@ export default function (state = initialState, action: any) {
       const currentStep = currentStepSelector(state);
       if (state.isRunning && currentStep!.category === "done") {
         return Object.assign({}, state, {
+          timerValue: 0,
           isRunning: false,
-          timerValue: 0
         })
       } else if (state.timerValue <= 0.1) {
         const nextStep = nextStepSelector(state)
         return Object.assign({}, state, {
-          isRunning: !currentStep.pauseWhenComplete,
-          timerValue: nextStep?.duration,
           currentStepCount: state.currentStepCount + 1,
+          timerValue: nextStep?.duration,
+          isRunning: !currentStep.pauseWhenComplete,
         })
       } else {
         return Object.assign({}, state, {
