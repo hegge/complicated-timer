@@ -128,16 +128,7 @@ const PlaySession: React.FC<Props> = (props) => {
       headerLeft: () => (
         <HeaderBackButton onPress={() => {
           if (props.isRunning) {
-            <MaterialDialog
-              title="Stop in-progress session?"
-              visible={cancelDialogVisible}
-              onOk={() => {
-                setCancelDialogVisible(false);
-                navigation.goBack();
-              }}
-              onCancel={() => setCancelDialogVisible(false)}>
-              <Text style={styles.dialogText}>Current progress will be lost.</Text>
-            </MaterialDialog>
+            setCancelDialogVisible(true);
           } else {
             navigation.goBack();
           }
@@ -149,6 +140,16 @@ const PlaySession: React.FC<Props> = (props) => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
+      <MaterialDialog
+        title="Stop in-progress session?"
+        visible={cancelDialogVisible}
+        onOk={() => {
+          setCancelDialogVisible(false);
+          navigation.goBack();
+        }}
+        onCancel={() => setCancelDialogVisible(false)}>
+        <Text style={styles.dialogText}>Current progress will be lost.</Text>
+      </MaterialDialog>
       <View style={[styles.currentStep, itemStyle(props.currentStep.category)]}>
         <Text style={styles.stepProgress}>{props.progress}</Text>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
