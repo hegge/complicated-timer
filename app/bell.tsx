@@ -6,8 +6,16 @@ var Sound = require('react-native-sound');
 Sound.setCategory('Playback');
 
 const files = new Map([
-  ["BELL", "bell.ogg"],
-  ["PREBELL", "prebell.ogg"],
+  ["END", "end.ogg"],
+  ["PAUSE", "pause.ogg"],
+  ["PAUSEBEEP", "pausebeep.ogg"],
+  ["PAUSESHORT", "pauseshort.ogg"],
+  ["PREALARM", "prealarm.ogg"],
+  ["PREPAUSETICK", "prepausetick.ogg"],
+  ["PREWORKTICK", "preworktick.ogg"],
+  ["WORK", "work.ogg"],
+  ["WORKBEEP", "workbeep.ogg"],
+  ["WORKSHORT", "workshort.ogg"],
 ]);
 
 let sounds = new Map([]);
@@ -42,8 +50,26 @@ function playSound(type: string) {
 
 export function maybePlaySound(timerValue: number, currentStep: CountdownEntry, nextStep: CountdownEntry) {
   if (timerValue === 0) {
-    playSound('bell');
+    if (nextStep.category === "work") {
+      if (nextStep.duration > 3) {
+        playSound('WORK');
+      } else {
+        playSound('SHORTWORK');
+      }
+    } else if (nextStep.category === "pause") {
+      if (nextStep.duration > 3) {
+        playSound('PAUSE');
+      } else {
+        playSound('SHORTPAUSE');
+      }
+    } else if (nextStep.category === "done") {
+      playSound('END');
+    }
   } else if (currentStep.countdownBell && (timerValue === 2 || timerValue === 1)) {
-    playSound('prebell');
+    if (nextStep.category === "work") {
+      playSound('PREWORKTICK');
+    } else if (nextStep.category === "pause") {
+      playSound('PREPAUSETICK');
+    }
   }
 }
