@@ -1,7 +1,7 @@
 export interface Session {
   name: string,
   description: string,
-  session: Entry[],
+  entries: Entry[],
   id?: string,
 }
 
@@ -17,7 +17,8 @@ export interface CountdownEntry {
   type: string,
   category: string,
   duration: number,
-  skip?: string,
+  skip?: number[],
+  pauseWhenComplete?: boolean,
   countdownBell?: boolean,
 }
 
@@ -26,7 +27,7 @@ export const emptySession = (): Session => {
     {
       name: "",
       description: "",
-      session: []
+      entries: []
     }
   );
 }

@@ -142,7 +142,7 @@ const SessionList: React.FC<Props> = (props) => {
   }, []);
 
   const renderSessionListItem = ({ item, index }: { item: Session, index: number }) => {
-    const { totalDuration, totalWorkDuration } = getSessionDuration(item.session);
+    const { totalDuration, totalWorkDuration } = getSessionDuration(item.entries);
 
     return (
       <SessionListItem

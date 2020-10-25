@@ -8,7 +8,7 @@ Session format
 [{
     "name": "4x4 :3'",
     "description": "Fixed length intervals",
-    "session": [{
+    "entries": [{
         "type": "repeat",
         "repetitions": 4,
         "group": [{
@@ -32,8 +32,8 @@ Session format
             "group": [{
                 "type": "countdown",
                 "category": "pause",
-                "skip": "first" / "last" / "1,2,3",
-                "pause_when_complete": true,
+                "skip": [1,2,-1],
+                "pauseWhenComplete": true,
                 "duration": 240
             },
             {
@@ -47,12 +47,12 @@ Session format
 {
     "name": "3x7 x7" :3"/3'",
     "description": "Intermittent dead-hangs",
-    "session": ...
+    "entries": ...
 },
 {
     "name": "2x3 x10" :3'",
     "description": "Max weight dead-hangs",
-    "session": ...
+    "entries": ...
 }]
 ```
 

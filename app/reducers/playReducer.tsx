@@ -40,7 +40,7 @@ const initialState: PlayState = {
   isRunning: false,
 };
 
-const sessionSelector = (state: PlayState) => state.session.session
+const sessionSelector = (state: PlayState) => state.session.entries
 const currentStepCountSelector = (state: PlayState) => state.currentStepCount
 
 export const currentStepSelector = createSelector(
@@ -77,7 +77,7 @@ export const entryCountSelector = createSelector(
 export default function (state = initialState, action: any) {
   switch (action.type) {
     case SET_SESSION: {
-      const currentStep = getSessionEntry(action.session.session, 0);
+      const currentStep = getSessionEntry(action.session.entries, 0);
       return Object.assign({}, state, {
         session: action.session,
         timerValue: currentStep?.duration,
@@ -94,6 +94,7 @@ export default function (state = initialState, action: any) {
       } else if (state.timerValue <= 0.1) {
         const nextStep = nextStepSelector(state)
         return Object.assign({}, state, {
+          isRunning: !currentStep.pauseWhenComplete,
           timerValue: nextStep?.duration,
           currentStepCount: state.currentStepCount + 1,
         })

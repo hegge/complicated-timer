@@ -31,8 +31,8 @@ const initialState: EditState = {
   session: emptySession(),
 };
 
-export const sessionSelector = (state: EditState) => state.session.session
-export const flattenedSessionSelector = (state: EditState) => flattenSession(state.session.session)
+export const sessionSelector = (state: EditState) => state.session.entries
+export const flattenedSessionSelector = (state: EditState) => flattenSession(state.session.entries)
 export const sessionNameSelector = (state: EditState) => state.session.name
 export const sessionDescriptionSelector = (state: EditState) => state.session.description
 
@@ -67,8 +67,8 @@ export default function (state = initialState, action: any): EditState {
         ...state,
         session: {
           ...state.session,
-          session: [
-            ...state.session.session,
+          entries: [
+            ...state.session.entries,
             action.entry
           ]
         }

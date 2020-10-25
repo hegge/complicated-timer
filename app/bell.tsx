@@ -65,7 +65,7 @@ export function maybePlaySound(timerValue: number, currentStep: CountdownEntry, 
     } else if (nextStep.category === "done") {
       playSound('END');
     }
-  } else if (currentStep.countdownBell && (timerValue === 2 || timerValue === 1)) {
+  } else if (currentStep.countdownBell !== false && (timerValue === 2 || timerValue === 1)) {
     if (nextStep.category === "work") {
       playSound('PREWORKTICK');
     } else if (nextStep.category === "pause") {

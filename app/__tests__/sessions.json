@@ -17,12 +17,11 @@
             "type": "countdown",
             "category": "pause",
             "duration": 180,
-            "skip": "last"
+            "skip": [-1]
           }
         ]
       }
-    ],
-    "id": 1
+    ]
   },
   {
     "name": "Sets :2'",
@@ -42,7 +41,7 @@
                 "type": "countdown",
                 "category": "pause",
                 "duration": 120,
-                "pause_when_complete": true
+                "pauseWhenComplete": true
               }
             ]
           },
@@ -50,12 +49,11 @@
             "type": "countdown",
             "category": "pause",
             "duration": 180,
-            "pause_when_complete": true
+            "pauseWhenComplete": true
           }
         ]
       }
-    ],
-    "id": 2
+    ]
   },
   {
     "name": "2x3 x7\" :3'",
@@ -70,8 +68,8 @@
             "type": "countdown",
             "category": "pause",
             "duration": 300,
-            "pause_when_complete": true,
-            "skip": "first"
+            "pauseWhenComplete": true,
+            "skip": [1]
           },
           {
             "type": "repeat",
@@ -82,8 +80,8 @@
                 "type": "countdown",
                 "category": "pause",
                 "duration": 180,
-                "pause_when_complete": true,
-                "skip": "first"
+                "pauseWhenComplete": true,
+                "skip": [1]
               },
               {
                 "type": "countdown",
@@ -115,8 +113,8 @@
             "type": "countdown",
             "category": "pause",
             "duration": 300,
-            "pause_when_complete": true,
-            "skip": "first"
+            "pauseWhenComplete": true,
+            "skip": [1]
           },
           {
             "type": "countdown",
@@ -143,7 +141,6 @@
           }
         ]
       }
-    ],
-    "id": 4
+    ]
   }
 ]

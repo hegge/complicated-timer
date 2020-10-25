@@ -104,9 +104,11 @@ export const getSessionEntryCount = (session: Entry[]) => {
 }
 
 const isSkipped = (entry: CountdownEntry, parentEntry: RepeatEntry, repNumber: number) => {
-  return ('skip' in entry &&
-    (entry.skip === 'first' && repNumber === 0) ||
-    (entry.skip === 'last' && repNumber === (parentEntry.repetitions - 1)));
+  if (entry.skip === undefined) {
+    return false;
+  }
+  return entry.skip.includes(repNumber + 1) ||
+    (entry.skip.includes(-1) && repNumber === (parentEntry.repetitions - 1));
 }
 
 export const traverseSession = (session: Entry[], callback: EntryCallback) => {
