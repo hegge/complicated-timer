@@ -7,15 +7,20 @@ export interface Session {
 
 export type Entry = RepeatEntry | CountdownEntry;
 
+export type RepeatType = 'repeat';
+export type CountdownType = 'countdown';
+
+export type CountdownCategory = 'work' | 'pause' | 'prepare' | 'done';
+
 export interface RepeatEntry {
-  type: string,
+  type: RepeatType,
   repetitions: number,
   group: Entry[],
 }
 
 export interface CountdownEntry {
-  type: string,
-  category: string,
+  type: CountdownType,
+  category: CountdownCategory,
   duration: number,
   skip?: number[],
   pauseWhenComplete?: boolean,

@@ -39,36 +39,44 @@ function playSound(type: string) {
     return;
   }
 
+  console.log(type + ': playing');
+
+  const timeout = setTimeout(() => {
+    console.log(type + ': stopping');
+    sound.stop();
+  }, 800);
+
   sound.play((success: boolean) => {
+    clearTimeout(timeout);
     if (success) {
-      console.log('successfully finished playing');
+      console.log(type + ': successfully finished playing');
     } else {
-      console.log('playback failed due to audio decoding errors');
+      console.log(type + ': playback failed due to audio decoding errors');
     }
   });
 }
 
 export function maybePlaySound(timerValueMillis: number, currentStep: CountdownEntry, nextStep: CountdownEntry) {
   if (timerValueMillis === 0) {
-    if (nextStep.category === "work") {
+    if (nextStep.category === "done") {
+      playSound('END');
+    } else if (nextStep.category === "work") {
       if (nextStep.duration > 3) {
         playSound('WORK');
       } else {
         playSound('SHORTWORK');
       }
-    } else if (nextStep.category === "pause") {
+    } else {
       if (nextStep.duration > 3) {
         playSound('PAUSE');
       } else {
         playSound('SHORTPAUSE');
       }
-    } else if (nextStep.category === "done") {
-      playSound('END');
     }
   } else if (currentStep.countdownBell !== false && (timerValueMillis === 2000 || timerValueMillis === 1000)) {
     if (nextStep.category === "work") {
       playSound('PREWORKTICK');
-    } else if (nextStep.category === "pause") {
+    } else {
       playSound('PREPAUSETICK');
     }
   }
