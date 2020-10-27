@@ -38,7 +38,7 @@ export const EditRepeat: React.FC<Props> = (props) => {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="default" />
       <View style={SharedStyles.body}>
         <View style={SharedStyles.descriptiveTextInputContainer}>
           <Text style={SharedStyles.descriptiveTextInputTitle}>Number of repetitions:</Text>

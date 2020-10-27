@@ -57,17 +57,18 @@ import { maybePlaySound } from '../bell';
 
 interface IconButtonProps {
   name: string,
+  size?: number,
   onPress: () => void,
 }
 
-const IconButton: React.FC<IconButtonProps> = ({ name, onPress }) => {
+const IconButton: React.FC<IconButtonProps> = ({ name, size, onPress }) => {
   return (<Icon.Button
     iconStyle={{
       marginRight: 0,
     }}
     color={Colors.light}
     backgroundColor={Colors.darkblue}
-    size={32}
+    size={size !== undefined ? size : 24}
     onPress={() => { onPress() }}
     name={name}
   />);
@@ -140,7 +141,7 @@ const PlaySession: React.FC<Props> = (props) => {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="default" />
       <MaterialDialog
         title="Stop in-progress session?"
         visible={cancelDialogVisible}
@@ -152,11 +153,19 @@ const PlaySession: React.FC<Props> = (props) => {
         <Text style={styles.dialogText}>Current progress will be lost.</Text>
       </MaterialDialog>
       <View style={[styles.currentStep, itemStyle(props.currentStep.category)]}>
-        <Text style={styles.stepProgress}>{props.progress}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: 'space-around',
+            width: "100%",
+          }}>
+          {props.progress.map((progress) => <Text key={progress} style={styles.stepProgress}>{progress}</Text>)}
+        </View>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
         <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10 && tickLength < 1000))}</Text>
         <IconButton
           name={props.currentStep.category === "done" ? "refresh" : props.isRunning ? "pause" : "play-arrow"}
+          size={36}
           onPress={() => {
             if (props.currentStep.category === "done") {
               props.restartPressed();
@@ -171,7 +180,8 @@ const PlaySession: React.FC<Props> = (props) => {
           style={{
             flexDirection: "row",
             paddingVertical: 4,
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            alignItems: "center",
           }}>
           <IconButton
             name="fast-rewind"
@@ -198,7 +208,8 @@ const PlaySession: React.FC<Props> = (props) => {
           style={{
             flexDirection: "row",
             paddingVertical: 4,
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            alignItems: "center",
           }}>
           <IconButton
             name="skip-previous"
@@ -223,12 +234,26 @@ const PlaySession: React.FC<Props> = (props) => {
       </View>
 
       {props.nextStep === null ||
-        <View style={[styles.nextStep, itemStyle(props.nextStep.category)]}>
-          <Text style={styles.nextTitle}>Next</Text>
-          <Text style={styles.nextName}>{capitalize(props.nextStep.category)}</Text>
-          {props.nextStep.category === "done" ||
-            <Text style={styles.nextDuration}>{formatDuration(props.nextStep.duration)}</Text>
-          }
+        <View
+          style={[
+            styles.nextStep,
+            itemStyle(props.nextStep.category),
+          ]}>
+          <Text style={styles.nextTitle}>Next:</Text>
+          <View
+            style={[
+              styles.nextStep,
+              itemStyle(props.nextStep.category),
+              {
+                flexDirection: "row",
+                justifyContent: 'space-around',
+              }
+            ]}>
+            <Text style={styles.nextName}>{capitalize(props.nextStep.category)}</Text>
+            {props.nextStep.category === "done" ||
+              <Text style={styles.nextDuration}>{formatDuration(props.nextStep.duration)}</Text>
+            }
+          </View>
         </View>
       }
     </>
@@ -284,17 +309,19 @@ export const styles = StyleSheet.create({
     color: Colors.lighter,
   },
   timer: {
-    fontSize: 128,
+    fontSize: 140,
     color: Colors.lighter,
   },
   currentStep: {
     fontSize: 12,
     alignItems: 'center',
-    flex: 5,
+    flex: 8,
+    width: "100%",
   },
   nextStep: {
     alignItems: 'center',
     flex: 1,
+    width: "100%",
   },
   nextTitle: {
     fontSize: 18,

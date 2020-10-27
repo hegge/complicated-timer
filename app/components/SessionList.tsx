@@ -182,7 +182,7 @@ const SessionList: React.FC<Props> = (props) => {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="default" />
       {props.isLoading ?
         <View style={{
           flex: 1,

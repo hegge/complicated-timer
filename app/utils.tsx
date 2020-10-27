@@ -40,7 +40,7 @@ export const itemStyle = (category: string) => {
 export const getSessionDuration = (session: Entry[]) => {
   var totalDuration = 0;
   var totalWorkDuration = 0;
-  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+  traverseSession(session, (entry, count, progress) => {
     totalDuration += entry.duration;
     if (entry.category === "work") {
       totalWorkDuration += entry.duration;
@@ -56,30 +56,39 @@ export const doneSessionEntry: CountdownEntry = {
   duration: 0,
 }
 
-export const getSessionProgress = (session: Entry[], index: number) => {
-  var progress = "";
-  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
-    if (total1 === 0) {
-      progress = "";
-    } else if (total2 === 0) {
-      progress = (rep1 + 1) + "/" + total1;
-    } else {
-      progress = (rep1 + 1) + "/" + total1 + " " + (rep2 + 1) + "/" + total2;
-    }
+export const getSessionProgress = (session: Entry[], index: number): ProgressEntry[] => {
+  let sessionProgress = [] as ProgressEntry[];
+  traverseSession(session, (entry, count, progress) => {
     if (index === count) {
+      sessionProgress = progress;
       return true;
     } else {
       return false;
     }
   });
+  return sessionProgress;
+}
+
+export const formatProgress = (sessionProgress: ProgressEntry[]): string[] => {
+  let progress = [] as string[];
+  for (let i = 0; i < sessionProgress.length; i++) {
+    let progressEntry = sessionProgress[i];
+    progress = [...progress, (progressEntry.current + 1) + "/" + progressEntry.total];
+  }
   return progress
 }
 
-type EntryCallback = (entry: CountdownEntry, count: number, rep1: number, total1: number, rep2: number, total2: number) => boolean
+interface ProgressEntry {
+  current: number,
+  total: number,
+  name?: string,
+}
+
+type EntryCallback = (entry: CountdownEntry, count: number, sessionProgress: ProgressEntry[]) => boolean
 
 export const getSessionEntry = (session: Entry[], index: number): CountdownEntry | null => {
   var entryAtIndex = null;
-  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
+  traverseSession(session, (entry, count, progress) => {
     if (index === count) {
       entryAtIndex = entry;
       return true;
@@ -92,8 +101,8 @@ export const getSessionEntry = (session: Entry[], index: number): CountdownEntry
 
 export const getSessionEntryCount = (session: Entry[]) => {
   var entryCount = 0;
-  traverseSession(session, (entry, count, rep1, total1, rep2, total2) => {
-    if (entry.type === "done") {
+  traverseSession(session, (entry, count, progress) => {
+    if (entry.category === "done") {
       return true;
     } else {
       entryCount++;
@@ -118,7 +127,7 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
     var entry = session[i];
 
     if (entry.type !== "repeat") {
-      if (callback(entry, count++, 0, 0, 0, 0)) {
+      if (callback(entry, count++, [])) {
         return;
       }
     } else {
@@ -127,7 +136,7 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
           var subEntry = entry.group[j];
 
           if (subEntry.type !== "repeat") {
-            if (!isSkipped(subEntry, entry, ii) && callback(subEntry, count++, ii, entry.repetitions, 0, 0)) {
+            if (!isSkipped(subEntry, entry, ii) && callback(subEntry, count++, [{ current: ii, total: entry.repetitions }])) {
               return;
             }
           } else {
@@ -136,7 +145,7 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
                 var subSubEntry = subEntry.group[k];
 
                 if (subSubEntry.type !== "repeat") {
-                  if (!isSkipped(subSubEntry, subEntry, jj) && callback(subSubEntry, count++, ii, entry.repetitions, jj, subEntry.repetitions)) {
+                  if (!isSkipped(subSubEntry, subEntry, jj) && callback(subSubEntry, count++, [{ current: ii, total: entry.repetitions }, { current: jj, total: subEntry.repetitions }])) {
                     return;
                   }
                 } else {
@@ -149,7 +158,7 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
       }
     }
   }
-  callback(doneSessionEntry, count++, 0, 0, 0, 0);
+  callback(doneSessionEntry, count++, []);
 }
 
 function extend(target: any, source: any): any {
@@ -163,28 +172,27 @@ export interface NestedEntry {
   nested: number,
 }
 
-export const flattenSession = (session: Entry[]): (CountdownEntry & RepeatEntry & NestedEntry)[] => {
+export const flattenSession = (session: Entry[]): (Entry & NestedEntry)[] => {
   var flattened = [];
-  for (var i = 0; i < session.length; i++) {
-    var entry = session[i];
-    flattened.push(entry);
+  for (let entry of session) {
+    flattened.push(extend(entry, { nested: 0 }));
 
     if ('group' in entry) {
-      for (var j = 0; j < entry.group.length; j++) {
-        var subEntry = entry.group[j];
-        flattened.push(extend(subEntry, { nested: 1 }));
+      let flattenedGroup = flattenGroup(entry.group, 1);
+      flattened.push(...flattenedGroup);
+    }
+  }
+  return flattened;
+}
 
-        if ('group' in subEntry) {
-          for (var k = 0; k < subEntry.group.length; k++) {
-            var subSubEntry = subEntry.group[k];
-            flattened.push(extend(subSubEntry, { nested: 2 }));
+const flattenGroup = (group: Entry[], nested: number): (Entry & NestedEntry)[] => {
+  var flattened = [];
+  for (let entry of group) {
+    flattened.push(extend(entry, { nested: nested }));
 
-            if (subSubEntry.type === "repeat") {
-              throw new Error("Deep nesting not supported");
-            }
-          }
-        }
-      }
+    if ('group' in entry) {
+      let flattenedGroup = flattenGroup(entry.group, nested + 1);
+      flattened.push(...flattenedGroup);
     }
   }
   return flattened;

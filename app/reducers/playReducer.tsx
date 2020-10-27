@@ -19,6 +19,7 @@ import {
 
 import {
   getSessionProgress,
+  formatProgress,
   getSessionEntry,
   getSessionEntryCount,
   doneSessionEntry,
@@ -65,7 +66,10 @@ export const nextStepSelector = createSelector(
 export const progressSelector = createSelector(
   sessionSelector,
   currentStepCountSelector,
-  (session, currentStepCount) => getSessionProgress(session, currentStepCount)
+  (session, currentStepCount) => {
+    let progress = getSessionProgress(session, currentStepCount);
+    return formatProgress(progress);
+  }
 )
 export const getProgress = (state: PlayState) => {
   return getSessionProgress(sessionSelector(state), state.currentStepCount);
