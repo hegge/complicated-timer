@@ -48,8 +48,8 @@ function playSound(type: string) {
   });
 }
 
-export function maybePlaySound(timerValue: number, currentStep: CountdownEntry, nextStep: CountdownEntry) {
-  if (timerValue === 0) {
+export function maybePlaySound(timerValueMillis: number, currentStep: CountdownEntry, nextStep: CountdownEntry) {
+  if (timerValueMillis === 0) {
     if (nextStep.category === "work") {
       if (nextStep.duration > 3) {
         playSound('WORK');
@@ -65,7 +65,7 @@ export function maybePlaySound(timerValue: number, currentStep: CountdownEntry, 
     } else if (nextStep.category === "done") {
       playSound('END');
     }
-  } else if (currentStep.countdownBell !== false && (timerValue === 2 || timerValue === 1)) {
+  } else if (currentStep.countdownBell !== false && (timerValueMillis === 2000 || timerValueMillis === 1000)) {
     if (nextStep.category === "work") {
       playSound('PREWORKTICK');
     } else if (nextStep.category === "pause") {

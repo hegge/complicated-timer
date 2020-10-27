@@ -29,18 +29,19 @@ import { createSelector } from 'reselect'
 export interface PlayState {
   session: Session,
   currentStepCount: number,
-  timerValue: number,
+  timerValueMillis: number,
   isRunning: boolean,
 }
 
 const initialState: PlayState = {
   session: emptySession(),
   currentStepCount: 0,
-  timerValue: 0,
+  timerValueMillis: 0,
   isRunning: false,
 };
 
 const sessionSelector = (state: PlayState) => state.session.entries
+export const timerValueSecondsSelector = (state: PlayState) => state.timerValueMillis / 1000
 const currentStepCountSelector = (state: PlayState) => state.currentStepCount
 
 export const currentStepSelector = createSelector(
@@ -74,14 +75,14 @@ export const entryCountSelector = createSelector(
   (session) => getSessionEntryCount(session)
 )
 
-export default function (state = initialState, action: any) {
+export default function (state = initialState, action: any): PlayState {
   switch (action.type) {
     case SET_SESSION: {
       const currentStep = getSessionEntry(action.session.entries, 0);
       return Object.assign({}, state, {
         session: action.session,
         currentStepCount: 0,
-        timerValue: currentStep?.duration,
+        timerValueMillis: currentStep!.duration * 1000,
         isRunning: false,
       })
     }
@@ -89,19 +90,19 @@ export default function (state = initialState, action: any) {
       const currentStep = currentStepSelector(state);
       if (state.isRunning && currentStep!.category === "done") {
         return Object.assign({}, state, {
-          timerValue: 0,
+          timerValueMillis: 0,
           isRunning: false,
         })
-      } else if (state.timerValue <= 0.1) {
+      } else if (state.timerValueMillis <= 100) {
         const nextStep = nextStepSelector(state)
         return Object.assign({}, state, {
           currentStepCount: state.currentStepCount + 1,
-          timerValue: nextStep?.duration,
+          timerValueMillis: nextStep !== null ? nextStep.duration * 1000 : 0,
           isRunning: !currentStep.pauseWhenComplete,
         })
       } else {
         return Object.assign({}, state, {
-          timerValue: state.timerValue - (action.tickLength / 1000)
+          timerValueMillis: state.timerValueMillis - action.tickLength
         })
       }
     }
@@ -117,32 +118,31 @@ export default function (state = initialState, action: any) {
       const currentStep = getSessionEntry(sessionSelector(state), 0);
       return Object.assign({}, state, {
         currentStepCount: 0,
-        timerValue: currentStep?.duration,
+        timerValueMillis: currentStep!.duration * 1000,
         isRunning: true,
       })
     }
     case REVERSE_PRESSED:
       const currentStep = currentStepSelector(state);
       return Object.assign({}, state, {
-        timerValue: Math.min(state.timerValue + 1, currentStep!.duration)
+        timerValueMillis: Math.min(state.timerValueMillis, currentStep!.duration * 1000)
       })
     case FORWARD_PRESSED:
       return Object.assign({}, state, {
-        timerValue: state.timerValue - 1
+        timerValueMillis: state.timerValueMillis - 1000
       })
     case BACK_PRESSED: {
       if (state.currentStepCount === 0) {
         const currentStep = currentStepSelector(state);
         return Object.assign({}, state, {
-          timerValue: currentStep?.duration,
+          timerValueMillis: currentStep?.duration * 1000,
           isRunning: false,
         })
       } else {
         const prevStep = prevStepSelector(state)
-
         return Object.assign({}, state, {
           currentStepCount: state.currentStepCount - 1,
-          timerValue: prevStep?.duration,
+          timerValueMillis: prevStep !== null ? prevStep.duration * 1000 : 0,
           isRunning: false,
         })
       }
@@ -152,7 +152,7 @@ export default function (state = initialState, action: any) {
       if (nextStep?.category !== "done") {
         return Object.assign({}, state, {
           currentStepCount: state.currentStepCount + 1,
-          timerValue: nextStep?.duration,
+          timerValueMillis: nextStep !== null ? nextStep.duration * 1000 : 0,
         })
       } else {
         return state;
@@ -160,13 +160,13 @@ export default function (state = initialState, action: any) {
     }
     case STEP_SLIDER_CHANGED:
       return Object.assign({}, state, {
-        timerValue: action.value
+        timerValueMillis: action.value * 1000
       })
     case SESSION_SLIDER_CHANGED: {
       const currentStep = getSessionEntry(sessionSelector(state), action.value);
       return Object.assign({}, state, {
         currentStepCount: action.value,
-        timerValue: currentStep?.duration,
+        timerValueMillis: currentStep!.duration * 1000,
       })
     }
   }

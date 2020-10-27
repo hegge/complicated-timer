@@ -30,6 +30,7 @@ import {
 } from '../actions/playActions';
 
 import {
+  timerValueSecondsSelector,
   currentStepSelector,
   prevStepSelector,
   nextStepSelector,
@@ -95,11 +96,11 @@ const PlaySession: React.FC<Props> = (props) => {
       }, tickLength);
       return () => clearInterval(interval);
     }
-  });
+  }, [props.isRunning]);
 
   useEffect(() => {
     if (props.isRunning && props.currentStep !== null && props.nextStep !== null) {
-      maybePlaySound(props.timerValue, props.currentStep, props.nextStep);
+      maybePlaySound(props.timerValueMillis, props.currentStep, props.nextStep);
     }
   });
 
@@ -237,7 +238,8 @@ const PlaySession: React.FC<Props> = (props) => {
 const mapStateToProps = (state: RootState) => ({
   sessions: state.sessions.sessions,
   currentStepCount: state.play.currentStepCount,
-  timerValue: state.play.timerValue,
+  timerValue: timerValueSecondsSelector(state.play),
+  timerValueMillis: state.play.timerValueMillis,
   isRunning: state.play.isRunning,
   progress: progressSelector(state.play),
   currentStep: currentStepSelector(state.play),
