@@ -142,7 +142,6 @@ export const traverseSession = (session: Entry[], callback: EntryCallback) => {
 }
 
 const traverseGroup = (group: Entry[], parent: RepeatEntry, count: {count: number}, repeat: number, progress: ProgressEntry[], callback: EntryCallback) => {
-  console.log("traverseGroup", count, group, progress);
   for (let entry of group) {
     if (entry.type !== "repeat") {
       if (!isSkipped(entry, parent, repeat) && callback(entry, count.count++, progress)) {
