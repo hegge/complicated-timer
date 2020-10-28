@@ -97,7 +97,7 @@ export default function (state = initialState, action: any): PlayState {
           timerValueMillis: 0,
           isRunning: false,
         })
-      } else if (state.timerValueMillis <= 100) {
+      } else if (state.timerValueMillis - action.tickLength < 0) {
         const nextStep = nextStepSelector(state)
         return Object.assign({}, state, {
           currentStepCount: state.currentStepCount + 1,
