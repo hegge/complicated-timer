@@ -44,6 +44,8 @@ import Slider from '@react-native-community/slider';
 
 import { MaterialDialog } from 'react-native-material-dialog';
 
+import { useKeepAwake } from 'expo-keep-awake';
+
 import {
   capitalize,
   formatDuration,
@@ -138,6 +140,8 @@ const PlaySession: React.FC<Props> = (props) => {
       ),
     });
   }, [navigation, props.isRunning]);
+
+  useKeepAwake();
 
   return (
     <>
