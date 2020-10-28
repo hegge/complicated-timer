@@ -121,44 +121,42 @@ const isSkipped = (entry: CountdownEntry, parentEntry: RepeatEntry, repNumber: n
 }
 
 export const traverseSession = (session: Entry[], callback: EntryCallback) => {
-  var count = 0;
+  const count = {
+    count: 0
+  }
 
-  for (var i = 0; i < session.length; i++) {
-    var entry = session[i];
-
+  for (let entry of session) {
     if (entry.type !== "repeat") {
-      if (callback(entry, count++, [])) {
+      if (callback(entry, count.count++, [])) {
         return;
       }
     } else {
-      for (var ii = 0; ii < entry.repetitions; ii++) {
-        for (var j = 0; j < entry.group.length; j++) {
-          var subEntry = entry.group[j];
-
-          if (subEntry.type !== "repeat") {
-            if (!isSkipped(subEntry, entry, ii) && callback(subEntry, count++, [{ current: ii, total: entry.repetitions }])) {
-              return;
-            }
-          } else {
-            for (var jj = 0; jj < subEntry.repetitions; jj++) {
-              for (var k = 0; k < subEntry.group.length; k++) {
-                var subSubEntry = subEntry.group[k];
-
-                if (subSubEntry.type !== "repeat") {
-                  if (!isSkipped(subSubEntry, subEntry, jj) && callback(subSubEntry, count++, [{ current: ii, total: entry.repetitions }, { current: jj, total: subEntry.repetitions }])) {
-                    return;
-                  }
-                } else {
-                  throw new Error("Deep nesting not supported");
-                }
-              }
-            }
-          }
+      for (let repeat = 0; repeat < entry.repetitions; repeat++) {
+        if (traverseGroup(entry.group, entry, count, repeat, [{ current: repeat, total: entry.repetitions }], callback)) {
+          return;
         }
       }
     }
   }
-  callback(doneSessionEntry, count++, []);
+  callback(doneSessionEntry, count.count++, []);
+}
+
+const traverseGroup = (group: Entry[], parent: RepeatEntry, count: {count: number}, repeat: number, progress: ProgressEntry[], callback: EntryCallback) => {
+  console.log("traverseGroup", count, group, progress);
+  for (let entry of group) {
+    if (entry.type !== "repeat") {
+      if (!isSkipped(entry, parent, repeat) && callback(entry, count.count++, progress)) {
+        return true;
+      }
+    } else {
+      for (let repeat = 0; repeat < entry.repetitions; repeat++) {
+        if (traverseGroup(entry.group, entry, count, repeat, [...progress, { current: repeat, total: entry.repetitions }], callback)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 function extend(target: any, source: any): any {
