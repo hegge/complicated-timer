@@ -129,7 +129,7 @@ export default function (state = initialState, action: any): PlayState {
     case REVERSE_PRESSED:
       const currentStep = currentStepSelector(state);
       return Object.assign({}, state, {
-        timerValueMillis: Math.min(state.timerValueMillis, currentStep!.duration * 1000)
+        timerValueMillis: Math.min(state.timerValueMillis + 1000, currentStep!.duration * 1000)
       })
     case FORWARD_PRESSED:
       return Object.assign({}, state, {
