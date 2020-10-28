@@ -2,23 +2,27 @@ import {
   CountdownEntry,
 } from './session'
 
-var Sound = require('react-native-sound');
+import Sound from 'react-native-sound';
+
 Sound.setCategory('Playback');
 
-const files = new Map([
-  ["END", "end.ogg"],
-  ["PAUSE", "pause.ogg"],
-  ["PAUSEBEEP", "pausebeep.ogg"],
-  ["PAUSESHORT", "pauseshort.ogg"],
-  ["PREALARM", "prealarm.ogg"],
-  ["PREPAUSETICK", "prepausetick.ogg"],
-  ["PREWORKTICK", "preworktick.ogg"],
-  ["WORK", "work.ogg"],
-  ["WORKBEEP", "workbeep.ogg"],
-  ["WORKSHORT", "workshort.ogg"],
+type SoundType = 'END' | 'PAUSE' | 'PAUSEBEEP' | 'PAUSESHORT' | 'PREALARM'
+  | 'PREPAUSETICK' | 'PREWORKTICK' | 'WORK' | 'WORKBEEP' | 'WORKSHORT';
+
+const files = new Map<SoundType, string>([
+  ['END', 'end.ogg'],
+  ['PAUSE', 'pause.ogg'],
+  ['PAUSEBEEP', 'pausebeep.ogg'],
+  ['PAUSESHORT', 'pauseshort.ogg'],
+  ['PREALARM', 'prealarm.ogg'],
+  ['PREPAUSETICK', 'prepausetick.ogg'],
+  ['PREWORKTICK', 'preworktick.ogg'],
+  ['WORK', 'work.ogg'],
+  ['WORKBEEP', 'workbeep.ogg'],
+  ['WORKSHORT', 'workshort.ogg'],
 ]);
 
-let sounds = new Map([]);
+let sounds = new Map<SoundType, Sound>([]);
 
 for (let [type, file] of files.entries()) {
   var sound = new Sound(file, Sound.MAIN_BUNDLE, (error: any) => {
@@ -31,7 +35,7 @@ for (let [type, file] of files.entries()) {
   sounds.set(type, sound);
 }
 
-function playSound(type: string) {
+function playSound(type: SoundType) {
   let sound = sounds.get(type) as Sound;
 
   if (sound == undefined) {
@@ -44,7 +48,7 @@ function playSound(type: string) {
   const timeout = setTimeout(() => {
     console.log(type + ': stopping');
     sound.stop();
-  }, 800);
+  }, 900);
 
   sound.play((success: boolean) => {
     clearTimeout(timeout);
@@ -64,13 +68,13 @@ export function maybePlaySound(timerValueMillis: number, currentStep: CountdownE
       if (nextStep.duration > 3) {
         playSound('WORK');
       } else {
-        playSound('SHORTWORK');
+        playSound('WORKSHORT');
       }
     } else {
       if (nextStep.duration > 3) {
         playSound('PAUSE');
       } else {
-        playSound('SHORTPAUSE');
+        playSound('PAUSESHORT');
       }
     }
   } else if (currentStep.countdownBell !== false && (timerValueMillis === 2000 || timerValueMillis === 1000)) {
