@@ -76,7 +76,7 @@ interface RepeatSessionItemProps {
 }
 
 const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
-  const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
+  const indent = 'nested' in props.item ? props.item.nested * 32 : 0;
 
   return <View style={styles.editItemContainer}>
     <Pressable
@@ -85,7 +85,7 @@ const RepeatSessionItem: React.FC<RepeatSessionItemProps> = (props) => {
         {
           flexDirection: "row",
           marginStart: indent,
-          padding: 10,
+          padding: 8,
           justifyContent: "space-around",
         }]}
       onPress={props.onPress}
@@ -106,7 +106,7 @@ interface CountdownSessionItemProps {
 }
 
 const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
-  const indent = 'nested' in props.item ? props.item.nested * 24 : 0;
+  const indent = 'nested' in props.item ? props.item.nested * 32 : 0;
 
   return <View style={styles.editItemContainer}>
     <Pressable
@@ -115,7 +115,7 @@ const CountdownSessionItem: React.FC<CountdownSessionItemProps> = (props) => {
         {
           flexDirection: "row",
           marginStart: indent,
-          padding: 10,
+          padding: 8,
           justifyContent: "space-around",
         }]}
       onPress={props.onPress}
@@ -138,6 +138,7 @@ const EditSession: React.FC<Props> = (props) => {
   const session = props.sessions[index];
   useEffect(() => {
     props.setSession(session)
+    setSelectedEntry(-1);
   }, []);
 
   const flatList = React.useRef(null)
@@ -151,14 +152,14 @@ const EditSession: React.FC<Props> = (props) => {
     if (item.type === "repeat") {
       let repeatItem = item as RepeatEntry & NestedEntry;
       return <RepeatSessionItem repetitions={repeatItem.repetitions} item={repeatItem}
-        onPress={() => navigation.navigate('EditRepeat', { index })}
+        onPress={() => selectedEntry < 0 ? navigation.navigate('EditRepeat', { index }) : setSelectedEntry(index)}
         onLongPress={() => setSelectedEntry(index)}
         selected={selectedEntry === index} />;
     } else {
       let countdownItem = item as CountdownEntry & NestedEntry;
       return <CountdownSessionItem category={countdownItem.category} duration={countdownItem.duration} item={countdownItem}
-        onPress={() => navigation.navigate('EditCountdown', { index })}
-        onLongPress={() => { console.log("longpress", index), setSelectedEntry(index) }}
+        onPress={() => selectedEntry < 0 ? navigation.navigate('EditCountdown', { index }) : setSelectedEntry(index)}
+        onLongPress={() => { setSelectedEntry(index) }}
         selected={selectedEntry === index} />
     }
   };
@@ -177,21 +178,21 @@ const EditSession: React.FC<Props> = (props) => {
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.moveEntryUp(index)
+                props.moveEntryUp(selectedEntry)
               }}
               title="Up"
             />
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.moveEntryDown(index)
+                props.moveEntryDown(selectedEntry)
               }}
               title="Down"
             />
             <Button
               color={Colors.darkblue}
               onPress={() => {
-                props.deleteEntry(index)
+                props.deleteEntry(selectedEntry)
               }}
               title="Delete"
             />
@@ -201,9 +202,9 @@ const EditSession: React.FC<Props> = (props) => {
           <HeaderBackButton onPress={() => { setSelectedEntry(-1) }} />
         ),
       } : {
-        headerRight: undefined,
-        headerLeft: undefined
-      });
+          headerRight: undefined,
+          headerLeft: undefined
+        });
   }, [navigation, selectedEntry]);
 
   return (
@@ -211,7 +212,7 @@ const EditSession: React.FC<Props> = (props) => {
       <StatusBar barStyle="default" />
       <View style={SharedStyles.body}>
         <View style={SharedStyles.descriptiveTextInputContainer}>
-          <Text style={SharedStyles.descriptiveTextInputTitle}>Session name:</Text>
+          <Text style={SharedStyles.descriptiveTextInputTitle}>Name:</Text>
           <ControlledTextInput
             style={SharedStyles.textInput}
             text={props.sessionName}
@@ -220,7 +221,7 @@ const EditSession: React.FC<Props> = (props) => {
           />
         </View>
         <View style={SharedStyles.descriptiveTextInputContainer}>
-          <Text style={SharedStyles.descriptiveTextInputTitle}>Session description:</Text>
+          <Text style={SharedStyles.descriptiveTextInputTitle}>Description:</Text>
           <ControlledTextInput
             style={SharedStyles.textInput}
             text={props.sessionDescription}
@@ -238,20 +239,37 @@ const EditSession: React.FC<Props> = (props) => {
           renderItem={renderSessionItem}
           ref={flatList}
         />
-        <Button
-          color={Colors.darkblue}
-          onPress={() => {
-            addSessionEntry(emptyStep);
-          }}
-          title="Add step"
-        />
-        <Button
-          color={Colors.darkblue}
-          onPress={() => {
-            addSessionEntry(emptyRepeat);
-          }}
-          title="Add repeat"
-        />
+        <View
+          style={{
+            flexDirection: "row",
+            width: "100%",
+            backgroundColor: Colors.light
+          }}>
+          <View
+            style={{
+              flex: 1,
+              marginHorizontal: 1,
+            }}>
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                addSessionEntry(emptyStep);
+              }}
+              title="Add step"
+            /></View>
+          <View
+            style={{
+              flex: 1,
+              marginHorizontal: 1,
+            }}>
+            <Button
+              color={Colors.darkblue}
+              onPress={() => {
+                addSessionEntry(emptyRepeat);
+              }}
+              title="Add repeat"
+            /></View>
+        </View>
       </View>
     </>
   );
@@ -281,8 +299,8 @@ export default connector(EditSession)
 
 const styles = StyleSheet.create({
   editItemContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     width: "100%",
   },
 });
