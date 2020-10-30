@@ -4,6 +4,7 @@ export const ADD_SESSION = 'ADD_SESSION';
 export const DUPLICATE_SESSION = 'DUPLICATE_SESSION';
 export const DELETE_SESSION = 'DELETE_SESSION';
 export const SET_LOADING = 'SET_LOADING';
+export const SAVE_SESSION = 'SAVE_SESSION';
 
 // play
 export const SET_SESSION = 'SET_SESSION';

@@ -106,9 +106,9 @@ export const EditCountdown: React.FC<Props> = (props) => {
           <ControlledTextInput
             style={SharedStyles.textInput}
             keyboardType="number-pad"
-            text={props.duration.toString()}
+            text={props.duration !== 0 ? props.duration.toString() : ""}
             placeholder="Enter duration"
-            onChangeText={(text: string) => props.setDuration(index, parseInt(text))}
+            onChangeText={(text: string) => props.setDuration(index, text !== "" ? parseInt(text) : 0)}
           />
         </View>
         <View style={styles.descriptiveRatioButtonContainer}>

@@ -28,6 +28,11 @@ import {
 } from '../actions/editActions';
 
 import {
+  saveSession,
+} from '../actions/sessionsActions';
+
+import {
+  sessionSelector,
   flattenedSessionSelector,
   sessionNameSelector,
   sessionDescriptionSelector,
@@ -51,6 +56,8 @@ import {
 } from '../utils';
 
 import { HeaderBackButton } from '@react-navigation/stack';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialDialog } from 'react-native-material-dialog';
 
 import Colors from '../colors';
 import SharedStyles from '../sharedStyles';
@@ -172,44 +179,94 @@ const EditSession: React.FC<Props> = (props) => {
         headerRight: () => (
           <View
             style={{
-              paddingHorizontal: 8,
+              paddingHorizontal: 2,
               flexDirection: "row"
             }}>
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                props.moveEntryUp(selectedEntry)
-              }}
-              title="Up"
-            />
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                props.moveEntryDown(selectedEntry)
-              }}
-              title="Down"
-            />
-            <Button
-              color={Colors.darkblue}
-              onPress={() => {
-                props.deleteEntry(selectedEntry)
-              }}
-              title="Delete"
-            />
-          </View>
+            <View
+              style={{
+                paddingHorizontal: 2,
+              }}>
+              <Button
+                color={Colors.darkblue}
+                onPress={() => {
+                  props.moveEntryUp(selectedEntry);
+                  setSelectedEntry(-1);
+                }}
+                title="Up"
+              />
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 2,
+              }}>
+              <Button
+                color={Colors.darkblue}
+                onPress={() => {
+                  props.moveEntryDown(selectedEntry);
+                  setSelectedEntry(selectedEntry + 1);
+                }}
+                title="Down"
+              />
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 2,
+              }}>
+              <Button
+                color={Colors.darkblue}
+                onPress={() => {
+                  props.deleteEntry(selectedEntry);
+                  setSelectedEntry(-1);
+                }}
+                title="Delete"
+              />
+            </View >
+          </View >
         ),
         headerLeft: () => (
-          <HeaderBackButton onPress={() => { setSelectedEntry(-1) }} />
+          <HeaderBackButton
+            backImage={() => <Icon
+              name="close"
+              size={24}
+            />}
+            onPress={() => { setSelectedEntry(-1) }}
+          />
         ),
       } : {
           headerRight: undefined,
-          headerLeft: undefined
+          headerLeft: () => (
+            <HeaderBackButton onPress={() => {
+              if (props.session !== props.sessions[index]) {
+                setSaveDialogVisible(true);
+              } else {
+                navigation.goBack();
+              }
+            }} />
+          ),
         });
-  }, [navigation, selectedEntry]);
+  }, [navigation, selectedEntry, props.session, props.sessions]);
+
+  const [saveDialogVisible, setSaveDialogVisible] = useState(false);
 
   return (
     <>
       <StatusBar barStyle="default" />
+      <MaterialDialog
+        title="Save changes to session?"
+        visible={saveDialogVisible}
+        okLabel="SAVE"
+        onOk={() => {
+          setSaveDialogVisible(false);
+          props.saveSession(props.session, index)
+          navigation.goBack();
+        }}
+        cancelLabel="DISCARD"
+        onCancel={() => {
+          setSaveDialogVisible(false)
+          navigation.goBack();
+        }}>
+        <Text>Discarded changes will be lost.</Text>
+      </MaterialDialog>
       <View style={SharedStyles.body}>
         <View style={SharedStyles.descriptiveTextInputContainer}>
           <Text style={SharedStyles.descriptiveTextInputTitle}>Name:</Text>
@@ -277,6 +334,7 @@ const EditSession: React.FC<Props> = (props) => {
 function mapStateToProps(state: RootState) {
   return {
     sessions: state.sessions.sessions,
+    session: sessionSelector(state.edit),
     flattenedSession: flattenedSessionSelector(state.edit),
     sessionName: sessionNameSelector(state.edit),
     sessionDescription: sessionDescriptionSelector(state.edit),
@@ -291,6 +349,7 @@ function matchDispatchToProps(dispatch: any) {
     moveEntryUp,
     moveEntryDown,
     deleteEntry,
+    saveSession,
   }, dispatch)
 }
 const connector = connect(mapStateToProps, matchDispatchToProps)

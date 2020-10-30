@@ -14,52 +14,6 @@
 
 (defn sessions [request]
   (let [sessions [{
-                   :name "4x4 :3'"
-                   :description "Fixed length intervals"
-                   :entries [{
-                              :type "repeat"
-                              :repetitions 4
-                              :description "Reps"
-                              :group [{
-                                       :type "countdown"
-                                       :category "work"
-                                       :duration 240
-                                       }
-                                      {
-                                       :type "countdown"
-                                       :category "pause"
-                                       :duration 180
-                                       :skip [-1]
-                                       }]
-                              }]
-                   }
-                  {
-                   :name "Sets :2'"
-                   :description "Pauses between variable length exercises"
-                   :entries [{
-                              :type "repeat"
-                              :repetitions 2
-                              :description "Sets"
-                              :group [{
-                                       :type "repeat"
-                                       :repetitions 3
-                                       :description "Reps"
-                                       :group [{
-                                                :type "countdown"
-                                                :category "pause"
-                                                :duration 120
-                                                :pauseWhenComplete true
-                                                }]
-                                       }
-                                      {
-                                       :type "countdown"
-                                       :category "pause"
-                                       :duration 180
-                                       :pauseWhenComplete true
-                                       }]
-                              }]
-                   }
-                  {
                    :name "2x3 x7\" :3'"
                    :description "Max weight dead-hangs"
                    :entries [{
@@ -169,6 +123,52 @@
                                                 :category "work"
                                                 :duration 7
                                                 }]
+                                       }]
+                              }]
+                   }
+                  {
+                   :name "4x4 :3'"
+                   :description "Fixed length intervals"
+                   :entries [{
+                              :type "repeat"
+                              :repetitions 4
+                              :description "Reps"
+                              :group [{
+                                       :type "countdown"
+                                       :category "work"
+                                       :duration 240
+                                       }
+                                      {
+                                       :type "countdown"
+                                       :category "pause"
+                                       :duration 180
+                                       :skip [-1]
+                                       }]
+                              }]
+                   }
+                  {
+                   :name "Sets :2'"
+                   :description "Pauses between variable length exercises"
+                   :entries [{
+                              :type "repeat"
+                              :repetitions 2
+                              :description "Sets"
+                              :group [{
+                                       :type "repeat"
+                                       :repetitions 3
+                                       :description "Reps"
+                                       :group [{
+                                                :type "countdown"
+                                                :category "pause"
+                                                :duration 120
+                                                :pauseWhenComplete true
+                                                }]
+                                       }
+                                      {
+                                       :type "countdown"
+                                       :category "pause"
+                                       :duration 180
+                                       :pauseWhenComplete true
                                        }]
                               }]
                    }]]

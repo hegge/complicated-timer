@@ -46,7 +46,7 @@ const App: React.FC = () => {
               name="PlaySession"
               component={PlaySession}
               options={({ route }) => ({
-                headerTitle: route.params.name,
+                title: route.params.name,
               })} />
             <Stack.Screen
               name="EditSession"

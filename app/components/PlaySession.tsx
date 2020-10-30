@@ -36,6 +36,7 @@ import {
   nextStepSelector,
   progressSelector,
   entryCountSelector,
+  sessionNameSelector,
 } from '../reducers/playReducer';
 
 import { RootState } from '../reducers/index';
@@ -90,7 +91,7 @@ const PlaySession: React.FC<Props> = (props) => {
   const session = props.sessions[index];
   useEffect(() => {
     props.setSession(session)
-  }, []);
+  }, [props.sessions]);
 
   useEffect(() => {
     if (props.isRunning) {
@@ -138,8 +139,9 @@ const PlaySession: React.FC<Props> = (props) => {
           }
         }} />
       ),
+      title: (props.sessionName),
     });
-  }, [navigation, props.isRunning]);
+  }, [navigation, props.isRunning, props.sessionName]);
 
   useKeepAwake();
 
@@ -154,7 +156,7 @@ const PlaySession: React.FC<Props> = (props) => {
           navigation.goBack();
         }}
         onCancel={() => setCancelDialogVisible(false)}>
-        <Text style={styles.dialogText}>Current progress will be lost.</Text>
+        <Text>Current progress will be lost.</Text>
       </MaterialDialog>
       <View style={[styles.currentStep, itemStyle(props.currentStep.category)]}>
         <View
@@ -163,7 +165,9 @@ const PlaySession: React.FC<Props> = (props) => {
             justifyContent: 'space-around',
             width: "100%",
           }}>
-          {props.progress.map((progress) => <Text key={progress} style={styles.stepProgress}>{progress}</Text>)}
+          {props.progress.length > 0 ?
+           props.progress.map((progress) => <Text key={progress} style={styles.stepProgress}>{progress}</Text>) :
+           <Text style={styles.stepProgress}></Text>}
         </View>
         <Text style={styles.stepName}>{capitalize(props.currentStep!.category)}</Text>
         <Text style={styles.timer}>{formatDuration(props.timerValue, true, (props.timerValue <= 10 && tickLength < 1000))}</Text>
@@ -274,7 +278,8 @@ const mapStateToProps = (state: RootState) => ({
   currentStep: currentStepSelector(state.play),
   nextStep: nextStepSelector(state.play),
   prevStep: prevStepSelector(state.play),
-  sessionEntryCount: entryCountSelector(state.play)
+  sessionEntryCount: entryCountSelector(state.play),
+  sessionName: sessionNameSelector(state.play),
 })
 
 function matchDispatchToProps(dispatch: any) {
@@ -338,7 +343,5 @@ export const styles = StyleSheet.create({
   nextDuration: {
     fontSize: 18,
     color: Colors.lighter,
-  },
-  dialogText: {
   },
 });

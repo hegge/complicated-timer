@@ -45,9 +45,9 @@ export const EditRepeat: React.FC<Props> = (props) => {
           <ControlledTextInput
             style={SharedStyles.textInput}
             keyboardType="number-pad"
-            text={props.repetitions.toString()}
+            text={props.repetitions !== 0 ? props.repetitions.toString() : ""}
             placeholder="Enter repetitions"
-            onChangeText={(text: string) => props.setRepetitions(index, parseInt(text))}
+            onChangeText={(text: string) => props.setRepetitions(index, text !== "" ? parseInt(text) : 0)}
           />
         </View>
       </View>

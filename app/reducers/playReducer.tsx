@@ -44,6 +44,7 @@ const initialState: PlayState = {
 const sessionSelector = (state: PlayState) => state.session.entries
 export const timerValueSecondsSelector = (state: PlayState) => state.timerValueMillis / 1000
 const currentStepCountSelector = (state: PlayState) => state.currentStepCount
+export const sessionNameSelector = (state: PlayState) => state.session.name
 
 export const currentStepSelector = createSelector(
     sessionSelector,
@@ -140,14 +141,12 @@ export default function (state = initialState, action: any): PlayState {
         const currentStep = currentStepSelector(state);
         return Object.assign({}, state, {
           timerValueMillis: currentStep?.duration * 1000,
-          isRunning: false,
         })
       } else {
         const prevStep = prevStepSelector(state)
         return Object.assign({}, state, {
           currentStepCount: state.currentStepCount - 1,
           timerValueMillis: prevStep !== null ? prevStep.duration * 1000 : 0,
-          isRunning: false,
         })
       }
     }
@@ -171,6 +170,7 @@ export default function (state = initialState, action: any): PlayState {
       return Object.assign({}, state, {
         currentStepCount: action.value,
         timerValueMillis: currentStep!.duration * 1000,
+        isRunning: false,
       })
     }
   }

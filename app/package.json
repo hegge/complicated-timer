@@ -15,6 +15,7 @@
     "@react-native-community/slider": "^3.0.3",
     "@react-navigation/native": "^5.7.6",
     "@react-navigation/stack": "^5.9.3",
+    "immutability-helper": "^3.1.1",
     "react": "16.13.1",
     "react-native": "0.63.3",
     "react-native-enhanced-popup-menu": "^0.7.0",

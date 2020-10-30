@@ -4,11 +4,14 @@ import {
   DUPLICATE_SESSION,
   DELETE_SESSION,
   SET_LOADING,
+  SAVE_SESSION,
 } from '../types'
 
 import {
   Session,
 } from '../session'
+
+import update from 'immutability-helper';
 
 export interface SessionsState {
   sessions: Session[],
@@ -48,6 +51,8 @@ export default function (state = initialState, action: any) {
       return Object.assign({}, state, {
         isLoading: action.isLoading
       })
+    case SAVE_SESSION:
+      return update(state, { sessions: { [action.index]: { $set: action.session } } });
   }
   return state;
 }

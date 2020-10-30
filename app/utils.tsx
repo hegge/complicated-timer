@@ -12,6 +12,9 @@ export const capitalize = (str: string) => (
 )
 
 export const formatDuration = (duration: number, compact = false, precise = false) => {
+  if (isNaN(duration)) {
+    return "";
+  }
   if (duration < 60 && compact) {
     if (precise) {
       return new Date(duration * 1000).toISOString().substr(17, 4);
@@ -170,27 +173,42 @@ export interface NestedEntry {
 }
 
 export const flattenSession = (session: Entry[]): (Entry & NestedEntry)[] => {
-  var flattened = [];
-  for (let entry of session) {
-    flattened.push(extend(entry, { nested: 0 }));
+  return doFlattenSession(session, 0);
+}
+
+const doFlattenSession = (group: Entry[], nested: number): (Entry & NestedEntry)[] => {
+  let flattened = [];
+  for (let entry of group) {
+    flattened.push(extend(entry, { nested: nested }));
 
     if ('group' in entry) {
-      let flattenedGroup = flattenGroup(entry.group, 1);
+      let flattenedGroup = doFlattenSession(entry.group, nested + 1);
       flattened.push(...flattenedGroup);
     }
   }
   return flattened;
 }
 
-const flattenGroup = (group: Entry[], nested: number): (Entry & NestedEntry)[] => {
-  var flattened = [];
-  for (let entry of group) {
-    flattened.push(extend(entry, { nested: nested }));
+export const getEntryPath = (session: Entry[], index: number): number[] => {
+  const count = {
+    count: 0
+  }
 
+  return doGetEntryPath(session, index, count);
+}
+
+const doGetEntryPath = (group: Entry[], index: number, count): number[] => {
+  for (let i = 0; i < group.length; i++) {
+    let entry = group[i];
+    if (count.count++ === index) {
+      return [i]
+    }
     if ('group' in entry) {
-      let flattenedGroup = flattenGroup(entry.group, nested + 1);
-      flattened.push(...flattenedGroup);
+      let pathInGroup = doGetEntryPath(entry.group, index, count);
+      if (pathInGroup.length !== 0) {
+        return [i, ...pathInGroup];
+      }
     }
   }
-  return flattened;
+  return [];
 }
