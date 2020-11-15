@@ -62,7 +62,7 @@
                               :group [{
                                        :type "countdown"
                                        :category "pause"
-                                       :duration 300
+                                       :duration 180
                                        :pauseWhenComplete true
                                        :skip [1]
                                        }
@@ -90,7 +90,7 @@
                               }]
                    }
                   {
-                   :name "6x5 x6\" :10\"/3'"
+                   :name "6x5 x6\" :10\"/2'"
                    :description "Intermittent dead-hangs"
                    :entries [{
                               :type "repeat"
@@ -121,7 +121,7 @@
                                                {
                                                 :type "countdown"
                                                 :category "work"
-                                                :duration 7
+                                                :duration 6
                                                 }]
                                        }]
                               }]
@@ -147,7 +147,7 @@
                               }]
                    }
                   {
-                   :name "Sets :2'"
+                   :name "2x3 :2'"
                    :description "Pauses between variable length exercises"
                    :entries [{
                               :type "repeat"
@@ -161,6 +161,7 @@
                                                 :type "countdown"
                                                 :category "pause"
                                                 :duration 120
+                                                :skip [1]
                                                 :pauseWhenComplete true
                                                 }]
                                        }
@@ -168,6 +169,35 @@
                                        :type "countdown"
                                        :category "pause"
                                        :duration 180
+                                       :skip [-1]
+                                       :pauseWhenComplete true
+                                       }]
+                              }]
+                   }
+                  {
+                   :name "2x3 :3'"
+                   :description "Pauses between variable length exercises"
+                   :entries [{
+                              :type "repeat"
+                              :repetitions 2
+                              :description "Sets"
+                              :group [{
+                                       :type "repeat"
+                                       :repetitions 3
+                                       :description "Reps"
+                                       :group [{
+                                                :type "countdown"
+                                                :category "pause"
+                                                :duration 180
+                                                :skip [1]
+                                                :pauseWhenComplete true
+                                                }]
+                                       }
+                                      {
+                                       :type "countdown"
+                                       :category "pause"
+                                       :duration 300
+                                       :skip [-1]
                                        :pauseWhenComplete true
                                        }]
                               }]
