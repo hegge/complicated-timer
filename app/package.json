@@ -17,7 +17,7 @@
     "@react-navigation/stack": "^5.9.3",
     "immutability-helper": "^3.1.1",
     "react": "16.13.1",
-    "react-native": "0.63.3",
+    "react-native": "0.64.1",
     "react-native-enhanced-popup-menu": "^0.7.0",
     "react-native-gesture-handler": "^1.8.0",
     "react-native-material-dialog": "^0.7.7",
